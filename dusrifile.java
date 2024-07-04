@@ -1,9 +1,5 @@
-/**
- * dusrifile
- */
-public class dusrifile {
-
+class test{
     public static void main(String[] args) {
-        System.out.println("vapas se pull request bhejo");
+        System.out.println("new msg");
     }
 }
