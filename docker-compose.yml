@@ -1,0 +1,20 @@
+version: '3.9'
+
+services:
+  monolith:
+    build: .
+    container_name: monolith
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    command: uvicorn monolith.main:app --host 0.0.0.0 --port 8000
+
+  analysis-base:
+    build:
+      context: ./microservices/analysis-base
+      dockerfile: Dockerfile
+    container_name: analysis-base
+    ports:
+      - "8100:8100"
+    command: uvicorn src.analysis_main:app --host 0.0.0.0 --port 8100 
