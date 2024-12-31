@@ -4,7 +4,7 @@ Certainly! Based on the file structure you've provided, here's a draft of an arc
 
 ## Overview
 
-This document outlines the architecture of the codebase, detailing its structure, components, and how they interact. The application consists of a monolithic application and microservices, each with its own responsibilities and dependencies.
+This document outlines the architecture of the codebase, detailing its structure, components, and how they interact. The application is evolving to adopt MACH (Microservices-based, API-first, Cloud-native, and Headless) architecture principles to ensure flexibility, scalability, and best-in-class capabilities.
 
 ## Codebase Structure
 
@@ -86,37 +86,20 @@ The codebase is organized as follows:
 - **Data Exchange Formats**:
   - Common formats like JSON or XML for data interchange.
 
-## Scaling Considerations
+## MACH Architecture Alignment
 
-- **Microservices**:
-  - Can be scaled independently based on load.
-  - Helps in distributing the workload effectively.
-- **Monolith**:
-  - May become a bottleneck; consider modularizing if necessary.
+### Microservices-Based
+- The microservices (e.g., the "analysis-base" service) each have focused responsibilities and are independently containerized.
+- To further align with MACH, consider extracting additional functionalities from the monolithic application into separate microservices where feasible.
 
-## Development Practices
+### API-First
+- All services expose well-defined RESTful or similar APIs for communication.
+- The monolith coordinates tasks via these APIs, ensuring loose coupling and enabling external or future clients to integrate easily.
 
-- **Version Control**:
-  - Ensure all components are tracked using a version control system.
-- **Continuous Integration/Continuous Deployment (CI/CD)**:
-  - Automate testing and deployment pipelines for reliability.
-- **Coding Standards**:
-  - Maintain consistent coding styles across all components for readability and maintenance.
+### Cloud-Native
+- Docker-based containerization is in place, allowing for seamless deployment across various cloud platforms.
+- Consider leveraging cloud services or orchestration (e.g., Kubernetes) to enhance scalability and reliability.
 
-## Security Considerations
-
-- **Container Security**:
-  - Regularly update base images to mitigate vulnerabilities.
-- **Dependency Management**:
-  - Keep dependencies up to date and monitor for any known security issues.
-- **Data Security**:
-  - Implement encryption for data in transit and at rest if sensitive data is handled.
-
-## Conclusion
-
-The architecture leverages both monolithic and microservices paradigms to balance simplicity and scalability. By separating concerns and containerizing each component, the system is designed for easy maintenance and potential future growth.
-
----
-
-Please feel free to provide more specific details or clarify certain parts, and I'd be happy to refine this document further!
-
+### Headless
+- The backend services, whether monolith or microservices, remain decoupled from any specific frontend layer.
+- Moving toward a fully headless setup would allow multiple frontends (mobile, web, IoT, etc.) to consume the same APIs for consistent experiences.
