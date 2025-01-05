@@ -10,6 +10,7 @@ Welcome to the Developer Guide for this project. This document aims to outline t
 4. Error Handling & Input Validation  
 5. Security Considerations  
 6. Testing Guidelines  
+7. Docker Image Management  
 
 ---
 ## Project Overview
@@ -63,6 +64,47 @@ By using Git Flow, you will create branches off of `develop` for new features an
 - **Unit Tests**: Write comprehensive unit tests for all functions and classes.
 - **Integration Tests**: Include integration tests if the feature interacts with external systems.
 - **Automation**: Automate tests via a CI/CD pipeline so that code changes are always validated.
+
+---
+## Docker Image Management
+
+To manage Docker images and ensure they are available on Docker Hub, follow these steps:
+
+1. **Build the Image**:
+   - Use the `docker build` command to create your Docker image.
+
+2. **Tag the Image**:
+   - Tag the image with your Docker Hub repository name using the `docker tag` command.
+   - Example for Monolith: `docker tag monolith-app:latest atalrani/ai-saas-platform:latest`
+   - Example for Analysis Base: `docker tag analysis-base:latest atalrani/ai-saas-platform-analysis-base:latest`
+
+3. **Push the Image**:
+   - Push the tagged image to Docker Hub using the `docker push` command.
+   - Example for Monolith: `docker push atalrani/ai-saas-platform:latest`
+   - Example for Analysis Base: `docker push atalrani/ai-saas-platform-analysis-base:latest`
+
+By following these steps, you can ensure that your Docker images are properly managed and available for deployment.
+
+---
+## Concurrency, State, and Event Management
+Our application handles concurrent operations by leveraging asyncio-based workers in the microservices/analysis-base/src/analysis_main.py. Within each microservice, a dedicated event management system (common/event_manager.py) tracks service state transitions and publishes relevant events to downstream services. By carefully isolating shared data in a protected module and validating all inputs, we ensure consistent and conflict-free state updates.
+
+Key points specific to our code:
+- We use asyncio gather() methods for parallel I/O tasks in the analysis microservice.
+- Event subscription and publishing is handled by the event_manager.py, where events are queued and processed in chronological order.
+- Shared state is safely updated within a dedicated concurrency-aware data structure.
+
+## Coding Standards
+All .py files in our microservices and common modules follow PEP 8 guidelines with additional custom linting rules to maintain consistency. Functions and classes contain clear docstrings describing parameters, return values, exceptions, and overall functionality. Security-related sections of the code (e.g., environment variable access) include detailed docstrings indicating any potential risks or usage constraints.
+
+## Security and Reliability
+Security tokens, API keys, and database credentials are retrieved from environment variables using secure placeholders in your code, ensuring no sensitive data is committed to version control. Input validation is performed at every API endpoint to prevent injection attacks and data corruption. Reliability is improved through robust exception handling that logs internal errors to a centralized logger.
+
+## CI/CD Pipeline
+Continuous Integration (CI) is carried out using GitHub Actions, which runs our linting, tests, and security checks on every pull request. Continuous Deployment (CD) is triggered upon successful tests and merges to the main branch. Artifacts are uploaded to a secure artifact management system specific to our pipeline, and environment-specific deploy scripts are automatically invoked for staging and production environments.
+
+## Docker and Kubernetes
+Our microservices are containerized via Dockerfiles found in their respective directories (e.g., microservices/analysis-base/Dockerfile). When building containers, environment variables for security tokens and production credentials are only injected in the production stage. Kubernetes deployment manifests are customized to your service architecture, placing each microservice in its own Kubernetes Deployment and Service, with a shared ConfigMap for environment-specific details. Rolling updates are used to avoid downtime during new deployments.
 
 ---
 

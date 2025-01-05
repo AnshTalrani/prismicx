@@ -53,9 +53,11 @@ The codebase is organized as follows:
 - **Monolith**:
   - **Dockerfile**: Located at the root level.
   - **Build Command**: `docker build -t monolith-app .`
+  - **Tag and Push**: `docker tag monolith-app:latest atalrani/ai-saas-platform:latest` and `docker push atalrani/ai-saas-platform:latest`
 - **Microservices**:
   - **Dockerfile**: Each microservice has its own Dockerfile.
   - **Build Command**: Navigate to the microservice directory and run `docker build -t analysis-base-service .`
+  - **Tag and Push**: `docker tag analysis-base:latest atalrani/ai-saas-platform-analysis-base:latest` and `docker push atalrani/ai-saas-platform-analysis-base:latest`
 
 ### Dependencies Management
 
