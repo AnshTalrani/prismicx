@@ -22,6 +22,19 @@ This project consists of:
 - A “monolith” application demonstrating a more traditional single-application approach.  
 - Shared libraries and requirements, making it easy to maintain consistent dependencies across services.
 
+### New Microservices
+- **communication-base**: Handles communication tasks and integrates with external APIs.
+- **agent**: Manages agent-related functionalities and processes.
+- **chatbot**: Provides chatbot capabilities for user interaction.
+- **customer-support-bot**: Offers customer support functionalities.
+- **expert-bots**: Hosts expert systems and AI-driven bots.
+- **mlops-pipeline**: Manages MLOps workflows and pipelines.
+- **management_systems**: Oversees management and administrative tasks.
+- **generative-base**: Focuses on generative AI models and tasks.
+- **marketing-base**: Supports marketing operations and analytics.
+
+Each microservice is containerized using Docker and can be built and run independently.
+
 The main goal is to showcase a modular, scalable approach using Docker and Docker Compose.
 
 ---

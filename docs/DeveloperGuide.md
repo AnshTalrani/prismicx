@@ -111,9 +111,3 @@ Kubernetes deployment uses:
 - Rolling updates for zero-downtime deployments
 
 ---
-
-**Note**: The diagrams in this documentation are stored in the `/docs/diagrams/` directory. To update them:
-
-1. Edit the corresponding `.puml` files in the `/docs/diagrams/` directory
-2. Generate PNG files using PlantUML
-3. Commit both `.puml` and `.png` files to version control 

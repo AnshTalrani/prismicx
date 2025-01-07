@@ -38,12 +38,20 @@ The codebase is organized as follows:
 #### a. Analysis Base Service
 
 - **Location**: `microservices/analysis-base/src/analysis_main.py`
-- **Description**: Performs data analysis tasks.
-- **Responsibilities**:
-  - Processes input data for analysis.
-  - Generates reports or analytics results.
-- **Dependencies**: Listed in `microservices/analysis-base/requirements.txt`.
-- **Containerization**: Has its own `Dockerfile` for building the Docker image specific to this service.
+
+#### b. New Microservices
+
+- **communication-base**: Manages communication tasks and API integrations.
+- **agent**: Handles agent-related functionalities.
+- **chatbot**: Provides chatbot capabilities for user interaction.
+- **customer-support-bot**: Offers customer support functionalities.
+- **expert-bots**: Hosts expert systems and AI-driven bots.
+- **mlops-pipeline**: Manages MLOps workflows and pipelines.
+- **management_systems**: Oversees management and administrative tasks.
+- **generative-base**: Focuses on generative AI models and tasks.
+- **marketing-base**: Supports marketing operations and analytics.
+
+Each microservice is containerized using Docker and follows the MACH architecture principles.
 
 ## Infrastructure and Deployment
 
