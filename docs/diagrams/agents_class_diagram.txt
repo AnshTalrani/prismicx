@@ -1,0 +1,630 @@
+@startuml Agent Microservice Class Diagram
+
+' -------------------------------------------------------------------
+' SKIN AND STYLING
+' -------------------------------------------------------------------
+skinparam packageTitleFontColor #333333
+skinparam packageTitleBackgroundColor #DCDCDC
+skinparam packageBorderColor #888888
+skinparam classBackgroundColor #F8F8F8
+skinparam classBorderColor #999999
+skinparam classArrowColor #000000
+skinparam classFontColor #000000
+skinparam interfaceFontColor DarkGreen
+skinparam interfaceBackgroundColor #F0F8FF
+
+' -------------------------------------------------------------------
+' AGENT MICROSERVICE
+' -------------------------------------------------------------------
+package "Agent Microservice" <<Agent>> {
+
+    ' Interfaces
+    interface IOrchestrationStrategy {
+        +execute(data: Any) : Any
+    }
+    
+    interface ITemplateFactory {
+        +create_template(purpose: String, layer: String, version: int) : FunctionTemplate
+    }
+    
+    interface ITemplateRepository {
+        +get_template(purpose: String, layer: String, version: Optional[int] = None) : FunctionTemplate
+        +save_template(template: FunctionTemplate) : None
+    }
+    
+    interface IFunctionExecutor {
+        +execute(function_template: FunctionTemplate, input_data: Any) : Any
+    }
+    
+    interface IMessageQueue {
+        +send_message(queue_name: str, message: str) : None
+    }
+
+    ' Classes
+    class RequestHandler {
+        +handle_request(request: Request) : dict
+    }
+    
+    class RequirementAnalyzer {
+        +analyze_request(request: Request) : AnalysisResult
+    }
+    
+    class TemplateSelector {
+        +select_template(purpose: String, layer: String, version: Optional[int] = None) : FunctionTemplate
+    }
+    
+    class Orchestrator {
+        +orchestrate(template: FunctionTemplate, data: Any, live: bool) : None
+    }
+    
+    class FunctionExecutor {
+        +execute(template: FunctionTemplate, input_data: Any) : dict
+        +send_to_generation_base(data: Any) : Any
+        +send_to_analysis_base(data: Any) : Any
+        +send_to_communication_base(data: Any) : Any
+    }
+    
+    class ErrorHandler {
+        +handle_error(error: Exception) : None
+    }
+    
+    class DataManager {
+        +inject_data(data: Any) : Any
+    }
+    
+    class TemplateFactory implements ITemplateFactory {
+        +create_template(purpose: String, layer: String, version: int) : FunctionTemplate
+    }
+    
+    class TemplateRepository implements ITemplateRepository {
+        +get_template(purpose: String, layer: String, version: Optional[int] = None) : FunctionTemplate
+        +save_template(template: FunctionTemplate) : None
+    }
+    
+    class SimpleOrchestrationStrategy implements IOrchestrationStrategy {
+        +execute(data: Any) : Any
+    }
+    
+    class ComplexOrchestrationStrategy implements IOrchestrationStrategy {
+        +execute(data: Any) : Any
+    }
+    
+    class FunctionTemplate {
+        -template_id: String
+        -version: int
+        -inputs: List<String>
+        -functions: List<String>
+        -outputs: List<String>
+        -user_id: String
+        -layer_id: String
+        -purpose_id: String
+        -batch_id: String
+        --
+        +get_template_details() : String
+    }
+    
+    class Request {
+        -request_id: String
+        -user_id: String
+        -layer_id: String
+        -purpose_id: String
+        -payload: Any
+        -timestamp: String
+        -source: String
+        --
+        +get_request_details() : String
+    }
+    
+    class AnalysisResult {
+        -need: String
+        -layer: String
+        -purpose: String
+        --
+        +get_analysis_details() : String
+    }
+    
+    class MessageQueue implements IMessageQueue {
+        +send_message(queue_name: String, message: String) : None
+    }
+    
+    class Logger {
+        +log_activity(activity: String) : None
+        +report_issue(issue: String) : None
+    }
+    
+    ' Relationships
+    RequestHandler --> Orchestrator
+    Orchestrator --> RequirementAnalyzer
+    Orchestrator --> TemplateSelector
+    Orchestrator --> FunctionExecutor
+    Orchestrator --> DataManager
+    Orchestrator --> ErrorHandler
+    Orchestrator --> MessageQueue
+    
+    TemplateSelector --> TemplateRepository
+    
+    TemplateFactory ..|> ITemplateFactory
+    TemplateRepository ..|> ITemplateRepository
+    
+    SimpleOrchestrationStrategy ..|> IOrchestrationStrategy
+    ComplexOrchestrationStrategy ..|> IOrchestrationStrategy
+    
+    FunctionExecutor ..|> IFunctionExecutor
+    MessageQueue ..|> IMessageQueue
+    
+}
+
+@enduml
+
+
+
+
+Use case:
+## **Use Cases for the Agent Microservice**
+
+The **Agent Microservice** is designed to handle diverse requests by orchestrating interactions between various components and microservices. Below are several key use cases that demonstrate how different scenarios are implemented using the classes defined in the class diagram.
+
+---
+
+### **1. Processing a Content Generation Request for Instagram Posts**
+
+#### **Objective:**
+Generate high-quality Instagram post content based on user insights and predefined templates.
+
+#### **Actors:**
+- **Client:** Initiates the content generation request.
+- **Agent Microservice Components:** `RequestHandler`, `RequirementAnalyzer`, `TemplateSelector`, `Orchestrator`, `FunctionExecutor`, `Logger`, `ErrorHandler`.
+
+#### **Flow:**
+
+1. **Receive Request:**
+   - **Client** sends a content generation request for an Instagram post.
+   - **RequestHandler** receives the request via the Communication Base.
+
+2. **Analyze Requirements:**
+   - **RequestHandler** invokes **RequirementAnalyzer** to extract `need`, `layer` (Branches), and `purpose` (Instagram Page Details).
+
+3. **Select Template:**
+   - **TemplateSelector** uses **ITemplateFactory** and **ITemplateRepository** to retrieve the appropriate `FunctionTemplate` for Instagram post generation.
+
+4. **Orchestrate Execution:**
+   - **Orchestrator** selects the **SimpleOrchestrationStrategy** based on the template.
+   - Coordinates with **FunctionExecutor** to execute functions defined in the template, such as fetching user insights and generating content.
+
+5. **Execute Functions:**
+   - **FunctionExecutor** interacts with **Generative-Base** to create the Instagram post content.
+
+6. **Manage Data:**
+   - **DataManager** injects additional data (e.g., user preferences) required for content generation.
+
+7. **Log Activities:**
+   - **Logger** records each step of the process for auditing and monitoring.
+
+8. **Handle Errors:**
+   - If any errors occur (e.g., missing user insights), **ErrorHandler** manages the exception and communicates with the client to request additional information.
+
+9. **Return Output:**
+   - Upon successful execution, the generated Instagram post content is uploaded and sent back to the client.
+
+#### **Class Interactions:**
+
+
+
+
+
+Explanation:
+Explanation of the Agent Microservice Class Diagram
+
+1. Core Components
+RequestHandler
+Responsibilities:
+Receives incoming requests via templates and the Communication Base.
+Initiates the processing pipeline by invoking the RequirementAnalyzer, TemplateSelector, and Orchestrator.
+Logs activities and handles errors through ErrorHandler and Logger.
+Key Methods:
+handle_request(request_data: dict): Handles the reception and initial processing of requests.
+RequirementAnalyzer
+Responsibilities:
+Analyzes incoming requests to determine the user's need, associated layer, and specific purpose.
+Key Methods:
+analyze(requirements: dict): Extracts and returns the analysis result from the request.
+TemplateSelector
+Responsibilities:
+Selects the appropriate function templates based on the identified purpose and layer from the analysis.
+Utilizes TemplateFactory and TemplateRepository to obtain the necessary templates.
+Key Methods:
+select_template(analysis_result: dict): Retrieves the correct FunctionTemplate.
+Orchestrator
+Responsibilities:
+Coordinates the execution of functions across different microservices using the selected templates.
+Applies the chosen orchestration strategy (simple or complex) to manage the workflow.
+Manages data injection or omission via DataManager.
+Key Methods:
+process_request(request): Executes the orchestration logic based on the template and data.
+FunctionExecutor
+Responsibilities:
+Executes the specific functions defined within the FunctionTemplate.
+Manages input and output data during function execution.
+Key Methods:
+execute(template: FunctionTemplate, data: dict = None): Runs the specified function and returns the output.
+ErrorHandler
+Responsibilities:
+Handles any errors or discrepancies encountered during the request processing.
+Communicates errors back to the client via the Communication Base.
+Key Methods:
+handle(error: Exception): Manages and resolves errors.
+DataManager
+Responsibilities:
+Dynamically injects or omits data based on availability and preset configurations.
+Key Methods:
+prepare_data(analysis: dict): Adds necessary data for function execution.
+
+2. Supporting Components
+Interfaces:
+IOrchestrationStrategy
+Defines the contract for different orchestration strategies.
+Method: execute(data: Any) : Any
+ITemplateFactory
+Defines the contract for creating templates.
+Method: createTemplate(purpose: String, layer: String) : FunctionTemplate
+ITemplateRepository
+Defines the contract for retrieving templates.
+Method: get_template(template_name: str) : FunctionTemplate
+IFunctionExecutor
+Defines the contract for executing functions.
+Method: execute(functionTemplate: FunctionTemplate, inputData: Any) : Any
+Classes Implementing Interfaces:
+TemplateFactory implements ITemplateFactory
+TemplateRepository implements ITemplateRepository
+FunctionExecutor implements IFunctionExecutor
+SimpleOrchestrationStrategy and ComplexOrchestrationStrategy implement IOrchestrationStrategy
+FunctionTemplate
+Attributes:
+templateID, inputs, functions, outputs, userID, layerID, purposeID, batchID
+Methods:
+getTemplateDetails(): Returns a summary of the template details.
+Request
+Attributes:
+requestID, payload, timestamp
+Methods:
+getRequestDetails(): Returns details of the request.
+AnalysisResult
+Attributes:
+need, layer, purpose
+Methods:
+getAnalysisDetails(): Returns the analysis details.
+
+3. Relationships
+RequestHandler utilizes RequirementAnalyzer, TemplateSelector, Orchestrator, ErrorHandler, and Logger.
+TemplateSelector relies on ITemplateFactory and ITemplateRepository to obtain FunctionTemplates.
+Orchestrator uses IFunctionExecutor, IOrchestrationStrategy, and DataManager to manage the execution workflow.
+FunctionExecutor, TemplateFactory, TemplateRepository, SimpleOrchestrationStrategy, and ComplexOrchestrationStrategy implement their respective interfaces, ensuring adherence to defined contracts.
+---
+Implementation Strategy
+1. Component Initialization:
+Utilize Dependency Injection to initialize core components (RequestHandler, RequirementAnalyzer, TemplateSelector, Orchestrator, etc.) with their dependencies (TemplateFactory, TemplateRepository, FunctionExecutor, OrchestrationStrategy, etc.).
+
+2. Receiving and Processing Requests:
+RequestHandler receives incoming requests through defined APIs or message queues connected to the Communication Base.
+Validates the request and triggers the RequirementAnalyzer to extract necessary details.
+
+3. Analyzing Requirements:
+RequirementAnalyzer parses the request to identify the user's need, associated layer (Trunk, Branches, Leaves, Fruits), and specific purpose.
+
+4. Template Selection:
+TemplateSelector uses TemplateRepository to fetch existing templates.
+If a template isn't available, TemplateFactory dynamically creates a new FunctionTemplate based on the purpose and layer.
+
+5. Orchestrating Function Execution:
+Orchestrator determines the orchestration strategy (simple or complex) based on the FunctionTemplate.
+Manages the execution flow by invoking FunctionExecutor to perform the necessary functions.
+DataManager injects or omits data as per the template's requirements.
+
+6. Handling Errors and Logging:
+ErrorHandler manages any errors during processing and communicates back to the client via the Communication Base.
+Logger records all activities and issues for monitoring and auditing.
+
+7. Orchestrating Inter-base and Intra-base Communication:
+Inter-base Communication:
+Utilize RESTful APIs or gRPC for synchronous interactions with other microservices (e.g., Generative-Base, Communication-Base).
+Employ message queues (e.g., RabbitMQ, Kafka) for asynchronous tasks.
+Intra-base Communication:
+Implement internal message brokers for handling logging, monitoring, and real-time data streaming.
+
+8. Ensuring Resilience and Fault Tolerance:
+Implement Circuit Breaker and Retry mechanisms to handle failing microservices gracefully.
+Define fallback strategies to maintain system functionality despite individual microservice failures.
+You have changes that have not been accepted or rejected, and creating a new composer will undo these changes.
+
+
+
+
+
+
+
+
+
+
+
+### Sequence Diagrams for Agent Microservice Use Cases
+
+Below are the sequence diagrams for each of the expanded use cases of the Agent Microservice. The diagrams are provided in PlantUML format for easy visualization and integration.
+
+---
+
+### 1. **Analyze User Requirements (Live Chatbot Request)**
+
+```plantuml:path/to/microservices/agent/docs/sequence/analyze_user_requirements.puml
+@startuml
+actor "Chatbot User" as User
+participant "API Endpoint (/process)" as API
+participant "RequestHandler" as Handler
+participant "RequirementAnalyzer" as Analyzer
+participant "IdentifierService" as IDService
+participant "Logger" as Logger
+
+User -> API: Send Request Data\n(user_id=1011, layer=Instagram, purpose=Instagram Post)
+API -> Handler: handle_request(req)
+Handler -> Logger: log_activity("Request received.")
+Handler -> Analyzer: analyze_request(req)
+Analyzer -> IDService: assign_identifiers(req)
+IDService --> Analyzer: AnalysisResult
+Analyzer --> Handler: AnalysisResult
+Handler -> Logger: log_activity("Requirements analyzed.")
+Handler --> API: Response {"status": "success", "request_id": <ID>}
+@enduml 
+```
+
+---
+### 2. **Analyze Predefined Batch Requirements (Batch Management System Request)**
+
+```plantuml:path/to/microservices/agent/docs/sequence/analyze_predefined_batch_requirements.puml
+@startuml
+actor "Management System" as Management
+participant "Batch Processor" as BatchProcessor
+participant "RequestHandler" as Handler
+participant "TemplateSelector" as Selector
+participant "Logger" as Logger
+
+Management -> BatchProcessor: Send Batch Requests\n([{user_id:1011, layer:Instagram, purpose:Instagram Post}, ...])
+BatchProcessor -> Handler: handle_request(req)
+Handler -> Selector: select_template(purpose_id=Instagram Post, layer_id=Instagram)
+Selector -> Repository: get_template(purpose_id, layer_id)
+alt Template Exists
+    Repository --> Selector: FunctionTemplate
+else Template Not Found
+    Selector -> Factory: create_template(purpose_id, layer_id)
+    Factory --> Selector: FunctionTemplate
+end
+Selector --> Handler: FunctionTemplate
+Handler -> Logger: log_activity("Template selected for batch request.")
+Handler --> BatchProcessor: Acknowledge Batch Processing Initiated
+@enduml 
+```
+
+#### 2. **Select Appropriate Template**
+
+```plantuml
+@startuml
+participant "RequestHandler" as Handler
+participant "TemplateSelector" as Selector
+participant "TemplateRepository" as Repository
+participant "TemplateFactory" as Factory
+participant "Logger" as Logger
+
+Handler -> Selector: select_template(purpose, layer)
+Selector -> Repository: get_template(purpose, layer)
+alt Template Exists
+    Repository --> Selector: FunctionTemplate
+else Template Not Found
+    Selector -> Factory: create_template(purpose, layer)
+    Factory --> Selector: FunctionTemplate
+end
+Selector --> Handler: FunctionTemplate
+Handler -> Logger: log_activity("Template selected.")
+@enduml
+```
+
+
+---
+
+#### 4. **Facilitate Inter-Base Communication**
+
+```plantuml
+@startuml
+participant "Orchestrator" as Orchestrator
+participant "BaseServiceA" as BaseA
+participant "BaseServiceB" as BaseB
+participant "Logger" as Logger
+
+Orchestrator -> BaseA: Send Instruction
+BaseA -> Orchestrator: Response Data
+Orchestrator -> BaseB: Send Instruction
+BaseB -> Orchestrator: Response Data
+Orchestrator -> Logger: log_activity("Inter-base communication completed.")
+Orchestrator --> Caller: Aggregated Results
+@enduml
+```
+
+
+---
+
+#### 6. **Handle Scheduled Job Inputs**
+
+```plantuml
+@startuml
+actor "Scheduled Job" as Job
+participant "API Endpoint (/process)" as API
+participant "RequestHandler" as Handler
+participant "RequirementAnalyzer" as Analyzer
+participant "Logger" as Logger
+
+Job -> API: Trigger Scheduled Request
+API -> Handler: handle_request(req)
+Handler -> Logger: log_activity("Scheduled request received.")
+Handler -> Analyzer: analyze_request(req)
+Analyzer --> Handler: AnalysisResult
+Handler -> Logger: log_activity("Scheduled request processed.")
+Handler --> API: Response
+@enduml
+```
+
+---
+
+#### 7. **Process Chatbot Inputs**
+
+```plantuml
+@startuml
+actor "Chatbot User" as User
+participant "Chatbot Interface" as Chatbot
+participant "API Endpoint (/process)" as API
+participant "RequestHandler" as Handler
+participant "RequirementAnalyzer" as Analyzer
+participant "Logger" as Logger
+
+User -> Chatbot: Send Message
+Chatbot -> API: Forward Message as Request
+API -> Handler: handle_request(req)
+Handler -> Logger: log_activity("Chatbot request received.")
+Handler -> Analyzer: analyze_request(req)
+Analyzer --> Handler: AnalysisResult
+Handler -> Logger: log_activity("Chatbot request processed.")
+Handler --> API: Response
+Chatbot -> User: Send Response
+@enduml
+```
+
+---
+
+#### 8. **Assign Identifiers to Requests**
+
+```plantuml
+@startuml
+participant "RequestHandler" as Handler
+participant "RequirementAnalyzer" as Analyzer
+participant "IdentifierService" as IDService
+participant "Logger" as Logger
+
+Handler -> Analyzer: analyze_request(req)
+Analyzer -> IDService: generate_identifiers(req)
+IDService --> Analyzer: (user_id, layer_id, purpose_id, request_id)
+Analyzer --> Handler: AnalysisResult with Identifiers
+Handler -> Logger: log_activity("Identifiers assigned to request.")
+@enduml
+```
+
+---
+
+
+
+
+
+
+
+
+### Updated Sequence Diagrams and Implementation Plan for Agent Microservice Framework
+
+Great! Based on your refined use case and additional specifications, I've updated the sequence diagrams and developed a concise implementation plan. Please review the diagrams and the plan below. Let me know if any adjustments are needed before we proceed with the implementation.
+
+---
+
+## ### Updated Sequence Diagrams
+
+Below are the updated sequence diagrams that incorporate both **live chatbot requests** and **batch management system requests**. These diagrams reflect the distinct processing flows for each request type as per your specifications.
+
+---
+
+
+---
+
+
+---
+
+### 3. **Dispatch Instructions to Bases and Handle Feedback (Live Chatbot Request)**
+
+```plantuml:path/to/microservices/agent/docs/sequence/dispatch_instructions_live_chatbot.puml
+@startuml
+participant "RequestHandler" as Handler
+participant "Orchestrator" as Orchestrator
+participant "FunctionExecutor" as Executor
+participant "SimpleOrchestrationStrategy" as Strategy
+participant "DataManager" as DataManager
+participant "Message Queue" as MQ
+participant "Communication Base" as CommBase
+participant "Logger" as Logger
+
+Handler -> Orchestrator: orchestrate(template, data)
+Orchestrator -> DataManager: inject_data(data)
+DataManager --> Orchestrator: processed_data
+Orchestrator -> Strategy: execute(processed_data)
+Strategy --> Orchestrator: result
+Orchestrator -> Executor: execute(template, result)
+Executor --> Orchestrator: execution_result
+Orchestrator -> Logger: log_activity("Instructions dispatched to bases.")
+
+alt Missing Essential Details
+    Orchestrator -> CommBase: notify_chatbot("Missing details for user_id=1011")
+    CommBase -> MQ: Send Notification Message
+    MQ --> CommBase: Confirmation
+    Orchestrator -> Logger: log_activity("Notified chatbot for missing details.")
+    Orchestrator --> Handler: Halt Process
+else All Details Present
+    Orchestrator -> CommBase: send_to_schedule_template(post_created)
+    CommBase -> MQ: Send Scheduled Post Message
+    MQ --> CommBase: Confirmation
+    Orchestrator -> Logger: log_activity("Output routed to schedule template.")
+    Orchestrator --> Handler: Process Completed
+end
+@enduml 
+```
+
+---
+
+### 4. **Dispatch Instructions to Bases and Handle Feedback (Batch Management System Request)**
+
+```plantuml:path/to/microservices/agent/docs/sequence/dispatch_instructions_batch.puml
+@startuml
+participant "RequestHandler" as Handler
+participant "Orchestrator" as Orchestrator
+participant "FunctionExecutor" as Executor
+participant "SimpleOrchestrationStrategy" as Strategy
+participant "DataManager" as DataManager
+participant "Logger" as Logger
+
+Handler -> Orchestrator: orchestrate(template, data)
+Orchestrator -> DataManager: inject_data(data)
+DataManager --> Orchestrator: processed_data
+Orchestrator -> Strategy: execute(processed_data)
+Strategy --> Orchestrator: result
+Orchestrator -> Executor: execute(template, result)
+Orchestrator -> Logger: log_activity("Instructions dispatched to bases.")
+Orchestrator --> Handler: Process Completed
+@enduml 
+```
+
+---
+
+### 5. **Route Outputs to Source**
+
+```plantuml:path/to/microservices/agent/docs/sequence/route_outputs.puml
+@startuml
+participant "Orchestrator" as Orchestrator
+participant "FunctionExecutor" as Executor
+participant "Communication Base" as CommBase
+participant "Chatbot" as Chatbot
+participant "Social Media Schedule" as Schedule
+participant "Logger" as Logger
+
+Executor -> Orchestrator: Execution Result
+Orchestrator -> Logger: log_activity("Routing output to source.")
+alt Feedback Needed
+    Orchestrator -> Chatbot: notify("Missing details for user_id=1011")
+else
+    Orchestrator -> Schedule: send_scheduled_post(post_data)
+    Schedule --> Orchestrator: Scheduled Confirmation
+end
+@enduml 
+```
+
+---
+

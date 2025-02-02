@@ -1,0 +1,262 @@
+@startuml Integrated Generative Base Class Diagram
+
+' -------------------------------------------------------------------
+' SKIN AND STYLING
+' -------------------------------------------------------------------
+skinparam packageTitleFontColor #333333
+skinparam packageTitleBackgroundColor #DCDCDC
+skinparam packageBorderColor #888888
+skinparam classBackgroundColor #F8F8F8
+skinparam classBorderColor #999999
+skinparam classArrowColor #000000
+skinparam classFontColor #000000
+skinparam interfaceFontColor DarkGreen
+skinparam interfaceBackgroundColor #F0F8FF
+
+' -------------------------------------------------------------------
+' GENERATIVE BASE MICROSERVICE
+' -------------------------------------------------------------------
+package "Generative Base Microservice" <<GenerativeBase>> {
+
+    ' Interfaces
+    interface IDeepInputProcessor {
+        +analyzeInput(raw_data: String) : dict
+    }
+
+    interface IExpertPreProcessor {
+        +optimizeTemplate(structured_data: dict) : dict
+    }
+
+    interface IOutputGenerator {
+        +generateContent(template_data: dict) : String
+    }
+
+    interface IExpertPro {
+        +enhanceContent(content: String, niche: String) : String
+    }
+
+    interface IMLFinetuner {
+        +finetuneContent(content: String) : String
+    }
+
+    interface IPostProcessor {
+        +validateContent(content: String) : bool
+        +getValidationErrors(content: String) : list
+    }
+
+    interface ILogger {
+        +logActivity(activity: String) : void
+        +logError(error: String) : void
+    }
+
+    interface IErrorHandler {
+        +handleError(error: Exception) : void
+    }
+
+    ' Classes
+    class GenerativeBaseAPI {
+        +processRequest(raw_data: String, niche: String = None) : String
+        +healthCheck() : String
+    }
+
+    class DeepInputProcessing implements IDeepInputProcessor {
+        +analyzeInput(raw_data: String) : dict
+    }
+
+    class ExpertPreProcessor implements IExpertPreProcessor {
+        +optimizeTemplate(structured_data: dict) : dict
+    }
+
+    class OutputGenerator implements IOutputGenerator {
+        +generateContent(template_data: dict) : String
+    }
+
+    class ExpertPro implements IExpertPro {
+        +enhanceContent(content: String, niche: String) : String
+    }
+
+    class MLFinetuner implements IMLFinetuner {
+        +finetuneContent(content: String) : String
+    }
+
+    class PostProcessor implements IPostProcessor {
+        +validateContent(content: String) : bool
+        +getValidationErrors(content: String) : list
+    }
+
+    class Logger implements ILogger {
+        +logActivity(activity: String) : void
+        +logError(error: String) : void
+    }
+
+    class ErrorHandler implements IErrorHandler {
+        +handleError(error: Exception) : void
+    }
+
+    ' Relationships within Generative Base
+    GenerativeBaseAPI --> IDeepInputProcessor : uses
+    GenerativeBaseAPI --> IExpertPreProcessor : uses
+    GenerativeBaseAPI --> IOutputGenerator : uses
+    GenerativeBaseAPI --> IExpertPro : uses
+    GenerativeBaseAPI --> IMLFinetuner : uses
+    GenerativeBaseAPI --> IPostProcessor : uses
+    GenerativeBaseAPI --> ILogger : uses
+    GenerativeBaseAPI --> IErrorHandler : uses
+
+    DeepInputProcessing --> Logger : logs to
+    ExpertPreProcessor --> Logger : logs to
+    OutputGenerator --> Logger : logs to
+    ExpertPro --> Logger : logs to
+    MLFinetuner --> Logger : logs to
+    PostProcessor --> Logger : logs to
+    ErrorHandler --> Logger : logs to
+
+    DeepInputProcessing ..|> IDeepInputProcessor
+    ExpertPreProcessor ..|> IExpertPreProcessor
+    OutputGenerator ..|> IOutputGenerator
+    ExpertPro ..|> IExpertPro
+    MLFinetuner ..|> IMLFinetuner
+    PostProcessor ..|> IPostProcessor
+    Logger ..|> ILogger
+    ErrorHandler ..|> IErrorHandler
+}
+
+' -------------------------------------------------------------------
+' EXPERT BOTS MICROSERVICE (Relevant Components)
+' -------------------------------------------------------------------
+package "Expert Bots Microservice" <<ExpertBots>> {
+
+    ' Interfaces
+    interface ILLMManager {
+        +loadModel(platformOrTool: String) : void
+        +generateContent(parameters: dict) : String
+        +createPrompt(parameters: dict) : String
+        +validateContent(checklists: List, content: String) : bool
+    }
+
+    interface ILogger {
+        +logActivity(activity: String) : void
+        +logError(error: String) : void
+    }
+
+    ' Classes
+    class ExpertBotAPI {
+        +generateContent(userID: String, platformID: String, parameters: dict) : String
+        +createPrompt(userID: String, toolID: String, parameters: dict) : String
+    }
+
+    class LLMManager implements ILLMManager {
+        +loadModel(platformOrTool: String) : void
+        +generateContent(parameters: dict) : String
+        +createPrompt(parameters: dict) : String
+        +validateContent(checklists: List, content: String) : bool
+    }
+
+    class Logger implements ILogger {
+        +logActivity(activity: String) : void
+        +logError(error: String) : void
+    }
+
+    ' Relationships within Expert Bots
+    ExpertBotAPI --> ILLMManager : uses
+    ExpertBotAPI --> ILogger : uses
+
+    LLMManager --> Logger : logs to
+    ExpertBotAPI --> LLMManager : uses
+
+    LLMManager ..|> ILLMManager
+    Logger ..|> ILogger
+}
+
+' -------------------------------------------------------------------
+' AGENT MICROSERVICE (Relevant Components)
+' -------------------------------------------------------------------
+package "Agent Microservice" <<Agent>> {
+
+    ' Interfaces
+    interface IFunctionExecutor {
+        +execute(functionTemplate: FunctionTemplate, inputData: Any) : Any
+    }
+
+    interface ILogger {
+        +logActivity(activity: String) : void
+        +reportIssue(issue: String) : void
+    }
+
+    ' Classes
+    class RequestHandler {
+        +receiveRequest(request: Request) : void
+    }
+
+    class FunctionExecutor implements IFunctionExecutor {
+        +execute(functionTemplate: FunctionTemplate, inputData: Any) : Any
+    }
+
+    class Logger implements ILogger {
+        +logActivity(activity: String) : void
+        +reportIssue(issue: String) : void
+    }
+
+    ' Relationships within Agent
+    RequestHandler --> IFunctionExecutor : uses
+    RequestHandler --> ILogger : uses
+
+    FunctionExecutor --> Logger : logs to
+    RequestHandler --> FunctionExecutor : uses
+
+    FunctionExecutor ..|> IFunctionExecutor
+    Logger ..|> ILogger
+}
+
+' -------------------------------------------------------------------
+' USER DETAILS MICROSERVICE (Relevant Components)
+' -------------------------------------------------------------------
+package "User-Details Microservice" <<UserDetails>> {
+
+    ' Interfaces
+    interface IUserInsightAPI {
+        +addData(userID: String, purposeID: String, layerID: String, data: UserInsight) : void
+        +retrieveData(userID: String, purposeID: String, layerID: String) : UserInsight
+    }
+
+    interface ILogger {
+        +logActivity(activity: String) : void
+        +logError(error: String) : void
+    }
+
+    ' Classes
+    class UserInsightAPI {
+        +addData(userID: String, purposeID: String, layerID: String, data: UserInsight) : void
+        +retrieveData(userID: String, purposeID: String, layerID: String) : UserInsight
+    }
+
+    class Logger implements ILogger {
+        +logActivity(activity: String) : void
+        +logError(error: String) : void
+    }
+
+    ' Relationships within User Details
+    UserInsightAPI --> ILogger : uses
+
+    Logger ..|> ILogger
+}
+
+' -------------------------------------------------------------------
+' INTEGRATION BETWEEN MICROSERVICES
+' -------------------------------------------------------------------
+
+' Generative Base interacts with Expert Bots
+GenerativeBaseAPI --> ExpertBotAPI : uses generateContent(), createPrompt()
+
+' Generative Base interacts with User Details
+DeepInputProcessing --> UserInsightAPI : retrieveData()
+ExpertPreProcessor --> UserInsightAPI : retrieveData()
+GenerativeBaseAPI --> UserInsightAPI : addData()
+
+' Generative Base interacts with Agent
+GenerativeBaseAPI --> RequestHandler : sends orchestrated requests
+
+' Agent interacts back with Generative Base
+RequestHandler --> GenerativeBaseAPI : invokes processRequest()
+
+@enduml

@@ -1,4 +1,13 @@
-requests
-pytest
+# Purpose: Lists the Python dependencies for the agent microservice.
+
 fastapi
-uvicorn 
+uvicorn
+requests
+pydantic
+pytest
+# Removed dependencies related to observability
+# open-telemetry-api
+# open-telemetry-sdk
+jsonschema
+spacy
+# Add any other dependencies as needed

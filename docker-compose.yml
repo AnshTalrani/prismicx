@@ -18,3 +18,33 @@ services:
     ports:
       - "8100:8100"
     command: uvicorn src.analysis_main:app --host 0.0.0.0 --port 8100 
+
+  generative-base:
+    environment:
+      EXPERT_BOTS_URL: "http://expert-bots:8000"
+      USER_DETAILS_URL: "http://user-details:5000"
+      BATCH_WORKERS: "4"
+      BATCH_TIMEOUT: "300"
+    networks:
+      - generative-net
+
+  expert-bots:
+    networks:
+      - generative-net
+
+  user-details:
+    networks:
+      - generative-net
+
+  agent:
+    environment:
+      PROCESSING_MODES: "realtime,batch"
+      MAX_BATCH_SIZE: "10000"
+
+networks:
+  generative-net:
+    driver: bridge
+    attachable: true
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16 

@@ -1,4 +1,6 @@
 requests
 pytest
 fastapi
-uvicorn 
+uvicorn
+python-dotenv  # For environment management
+pydantic       # For data validation 

@@ -1,0 +1,196 @@
+@startuml UserDetails Microservice Class Diagram
+
+' -------------------------------------------------------------------
+' SKIN AND STYLING
+' -------------------------------------------------------------------
+skinparam packageTitleFontColor #333333
+skinparam packageTitleBackgroundColor #DCDCDC
+skinparam packageBorderColor #888888
+skinparam classBackgroundColor #F8F8F8
+skinparam classBorderColor #999999
+skinparam classArrowColor #000000
+skinparam classFontColor #000000
+skinparam interfaceFontColor DarkGreen
+skinparam interfaceBackgroundColor #F0F8FF
+
+' -------------------------------------------------------------------
+' USER-DETAILS MICROSERVICE
+' -------------------------------------------------------------------
+package "User-Details Microservice" <<UserDetails>> {
+
+    ' Interfaces
+    interface IUserInsightAPI {
+        +addData(userID: String, purposeID: String, layerID: String, data: UserInsight) : void
+        +retrieveData(userID: String, purposeID: String, layerID: String) : UserInsight
+    }
+
+    ' Classes
+    class UserInsightAPI implements IUserInsightAPI {
+        +addData(userID: String, purposeID: String, layerID: String, data: UserInsight) : void
+        +retrieveData(userID: String, purposeID: String, layerID: String) : UserInsight
+        +loadPresetConfigs() : void
+        --
+        -configManager : ConfigManager
+        -repository : UserInsightRepository
+        --
+        note right
+          Handles adding and retrieving UserInsight data based on
+          UserID, PurposeID, and LayerID using preset configurations.
+        end note
+    }
+
+    class ConfigManager {
+        +getRelevantTopics(purposeID: String, layerID: String) : List<Topic>
+        +getRelevantSubtopics(topicID: String) : List<Subtopic>
+        --
+        note right
+          Manages preset configurations to determine relevant topics
+          and subtopics based on PurposeID and LayerID.
+        end note
+    }
+
+    class UserInsight {
+        -userID : String
+        -purposeID : String
+        -layerID : String
+        -topics : List<Topic>
+        -practicality : Practicality
+        --
+        +validateInsight() : bool
+        --
+        note right
+          Represents the comprehensive UserInsight document containing
+          all relevant user data and interconnected topics.
+        end note
+    }
+
+    class Topic {
+        -topicID : String
+        -name : String
+        -subtopics : List<Subtopic>
+        --
+        +addSubtopic(subtopic: Subtopic) : void
+    }
+
+    class Subtopic {
+        -subtopicID : String
+        -name : String
+        -relatedSubtopics : List<Subtopic>
+        --
+        +connectSubtopic(subtopic: Subtopic) : void
+    }
+
+    class Practicality {
+        -secretSauces : List<SecretSauce>
+        -factors : List<Factor>
+        --
+        +addSecretSauce(sauce: SecretSauce) : void
+        +addFactor(factor: Factor) : void
+    }
+
+    class SecretSauce {
+        -sauceID : String
+        -description : String
+        --
+        +getDescription() : String
+    }
+
+    class Factor {
+        -factorID : String
+        -name : String
+        -description : String
+        --
+        +getFactorDetails() : String
+    }
+
+    class UserInsightExtension {
+        -generatedContentHistory : List<GeneratedContent>
+        -userInteractions : List<UserInteraction>
+        -performanceMetrics : PerformanceMetrics
+        -feedbackReviews : List<FeedbackReview>
+        -sessions : List<Session>
+        --
+        +logContent(content: GeneratedContent) : void
+        +recordInteraction(interaction: UserInteraction) : void
+    }
+
+    class GeneratedContent {
+        -contentID : String
+        -type : String
+        -body : String
+        -dateCreated : Date
+        -performanceMetrics : PerformanceMetrics
+        --
+        +getContentDetails() : String
+    }
+
+    class UserInteraction {
+        -sessionID : String
+        -preferences : String
+        -timestamp : Date
+        --
+        +getInteractionDetails() : String
+    }
+
+    class PerformanceMetrics {
+        -likes : int
+        -shares : int
+        -comments : int
+        -sales : float
+        -websiteTraffic : int
+        -conversionRate : float
+        --
+        +updateMetrics(newMetrics: PerformanceMetrics) : void
+    }
+
+    class FeedbackReview {
+        -reviewID : String
+        -source : String
+        -content : String
+        -timestamp : Date
+        --
+        +getReviewDetails() : String
+    }
+
+    class Session {
+        -sessionID : String
+        -activityLog : List<String>
+        -startTime : Date
+        -endTime : Date
+        --
+        +logActivity(activity: String) : void
+    }
+
+    class UserInsightRepository {
+        +save(userInsight: UserInsight) : void
+        +find(userID: String, purposeID: String, layerID: String) : UserInsight
+        --
+        note right
+          Handles data storage and retrieval for UserInsight documents.
+        end note
+    }
+
+    ' Relationships
+    UserInsightAPI --> ConfigManager : uses
+    UserInsightAPI --> UserInsightRepository : uses
+    UserInsightAPI --> UserInsight : manages
+    UserInsight --> Topic
+    UserInsight --> Practicality
+    UserInsight --> UserInsightExtension
+    Topic --> Subtopic
+    Subtopic --> Subtopic : interconnected
+    Practicality --> SecretSauce
+    Practicality --> Factor
+    UserInsightExtension --> GeneratedContent
+    UserInsightExtension --> UserInteraction
+    UserInsightExtension --> PerformanceMetrics
+    UserInsightExtension --> FeedbackReview
+    UserInsightExtension --> Session
+
+    ' Each UserInsight has one UserInsightExtension and one Practicality
+    UserInsight "1" -- "1" UserInsightExtension : contains
+    UserInsight "1" -- "1" Practicality : includes
+
+}
+
+@enduml 
