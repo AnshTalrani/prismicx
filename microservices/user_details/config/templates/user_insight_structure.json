@@ -1,0 +1,43 @@
+{
+  "version": "1.0",
+  "schema": {
+    "topics": {
+      "required": ["topic_id", "name"],
+      "properties": {
+        "topic_id": "string",
+        "name": "string",
+        "description": "string",
+        "subtopics": "array",
+        "is_usp": "boolean",
+        "tags": "array"
+      }
+    },
+    "subtopics": {
+      "required": ["subtopic_id", "name"],
+      "properties": {
+        "subtopic_id": "string",
+        "name": "string",
+        "content": "object",
+        "is_usp": "boolean",
+        "tags": "array"
+      }
+    },
+    "metadata": {
+      "allowed_properties": [
+        "primary_interests",
+        "learning_style",
+        "preferred_content_formats",
+        "business_type",
+        "industry",
+        "target_audience"
+      ]
+    }
+  },
+  "default_metadata": {
+    "learning_style": "unspecified",
+    "preferred_content_formats": ["text"],
+    "business_type": "unspecified",
+    "industry": "unspecified",
+    "target_audience": []
+  }
+} 

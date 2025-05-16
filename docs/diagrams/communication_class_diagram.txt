@@ -1,0 +1,103 @@
+@startuml Communication Base Service
+
+' Core Service Classes
+class CommunicationMain {
+  +main()
+}
+
+class APIGateway {
+  +process_endpoint(request: Request)
+  +process_campaign_batch(campaign_data: Dict)
+}
+
+class BotManager {
+  -config_manager: ConfigManager
+  -chain_builder: RAGChainBuilder
+  -memory_manager: EnhancedMemoryManager
+  +handle_message(message: str, session_id: str, user_id: str)
+}
+
+' Bot Classes
+abstract class BaseBot {
+  #model_path: str
+  #adapters_path: str
+  +initialize_model()
+  +handle_request(prompt: str, session_id: str, user_id: str)
+}
+
+class ConsultancyBot {
+  -adapters: Dict
+  +load_adapters()
+  +update_model(new_model_path: str)
+  +update_adapter(adapter_name: str, new_adapter_path: str)
+}
+
+class SalesBot {
+  +process_campaign_message(user_data: Dict, campaign: Campaign, stage: str)
+}
+
+class SupportBot {
+  +handle_request(prompt: str)
+}
+
+' Configuration Classes
+class ConfigManager {
+  +load_bot_config(bot_type: str): Dict
+  +get_template(template_path: str): Dict
+  +get_chain_config(config: Dict): Dict
+}
+
+' Memory Management Classes
+class EnhancedMemoryManager {
+  -store: RedisMemoryStore
+  -analytics: MemoryAnalytics
+  -template_engine: DynamicTemplateEngine
+  +get_memory_for_session(session_id: str, bot_config: Dict)
+  +process_message(message: str, session_id: str, user_id: str, bot_config: Dict)
+  +end_session(session_id: str, user_id: str, bot_config: Dict)
+}
+
+class RedisMemoryStore {
+  -redis_client: Redis
+  +get_history(session_id: str, bot_config: Dict)
+  +save_message(session_id: str, message: BaseMessage, bot_config: Dict)
+}
+
+class MemoryAnalytics {
+  -config_manager: ConfigManager
+  -llm: ChatOpenAI
+  -nlp_processor: NLPProcessor
+  +analyze_message(message: str, session_id: str, bot_config: Dict)
+  +analyze_conversation(messages: List[BaseMessage], bot_config: Dict)
+}
+
+' RAG Components
+class RAGChainBuilder {
+  -chain_config: Dict
+  -llm: ChatOpenAI
+  +create_rag_chain(retriever, memory, session_id: str)
+  +create_condense_question_chain()
+}
+
+class DocumentLoader {
+  -text_splitter: RecursiveCharacterTextSplitter
+  +load_directory(path: str): List
+}
+
+' Relationships
+CommunicationMain --> APIGateway
+APIGateway --> BotManager
+BotManager --> ConfigManager
+BotManager --> BaseBot
+BotManager --> EnhancedMemoryManager
+BotManager --> RAGChainBuilder
+
+BaseBot <|-- ConsultancyBot
+BaseBot <|-- SalesBot
+BaseBot <|-- SupportBot
+
+EnhancedMemoryManager --> RedisMemoryStore
+EnhancedMemoryManager --> MemoryAnalytics
+RAGChainBuilder --> DocumentLoader
+
+@enduml

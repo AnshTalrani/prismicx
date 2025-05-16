@@ -1,0 +1,355 @@
+@startuml Domain Entities
+
+' Style settings for clarity
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam linetype ortho
+skinparam packageStyle rectangle
+skinparam packagePadding 10
+
+' Colors for different types of classes
+!define ENTITY_COLOR #E1F5FE
+!define ENUM_COLOR #FFF9C4
+!define VALUE_OBJECT_COLOR #E8F5E9
+!define INTERFACE_COLOR #F3E5F5
+!define BORDER_COLOR #2196F3
+
+' Style application
+skinparam class {
+    BackgroundColor ENTITY_COLOR
+    BorderColor BORDER_COLOR
+    ArrowColor #424242
+    FontColor #212121
+}
+
+skinparam enum {
+    BackgroundColor ENUM_COLOR
+    BorderColor #FBC02D
+}
+
+' Title
+title <b>Agent Microservice - Domain Entities</b>
+
+' Package organization
+package "Domain Entities" {
+    ' Core entities with stereotype
+    class ExecutionTemplate <<Entity>> {
+        + id: String  ' Standardized ID format: req_{source}_{timestamp}_{random}
+        + name: String
+        + description: String
+        + service_type: ServiceType
+        + version: String
+        + status: TemplateStatus
+        + parameters: Dict[str, Any]
+        + config: Dict[str, Any]
+        + created_at: DateTime
+        + updated_at: DateTime
+        + created_by: String  ' Standardized ID format
+        --
+        + validate_parameters(data: Dict[str, Any]): bool
+        + is_active(): bool
+        + is_deprecated(): bool
+        + activate(): void
+        + deprecate(): void
+        + archive(): void
+    }
+
+    class Request <<Entity>> {
+        + id: String  ' Standardized ID format: req_{source}_{timestamp}_{random}
+        + template_id: String  ' Standardized ID format
+        + data: Dict[str, Any]
+        + status: ExecutionStatus
+        + result: Dict[str, Any]
+        + error: Optional[Dict[str, Any]]
+        + metadata: Dict[str, Any]
+        + created_at: DateTime
+        + updated_at: DateTime
+        + completed_at: Optional[DateTime]
+        + created_by: String  ' Standardized ID format
+        + purpose_id: Optional[String]  ' Standardized ID format
+        + text: Optional[String]
+        --
+        + process(): void
+        + update_status(status: ExecutionStatus): void
+        + set_result(result: Dict[str, Any]): void
+        + set_error(error: Dict[str, Any]): void
+        + can_retry(): bool
+        + mark_completed(): void
+        + mark_failed(error: Dict[str, Any]): void
+    }
+
+    class User <<Entity>> {
+        + id: String  ' Standardized ID format
+        + username: String
+        + email: String
+        + role: String
+        + permissions: List[String]
+        + created_at: DateTime
+        + updated_at: DateTime
+        + is_active: bool
+        --
+        + has_permission(permission: String): bool
+        + update_permissions(permissions: List[String]): void
+        + activate(): void
+        + deactivate(): void
+        + add_permission(permission: String): void
+        + remove_permission(permission: String): void
+    }
+    
+    class Purpose <<Entity>> {
+        + id: String  ' Standardized ID format
+        + name: String
+        + description: String
+        + keywords: List[String]
+        + template_id: String  ' Standardized ID format
+        + created_at: DateTime
+        + updated_at: DateTime
+        --
+        + match_keywords(text: String): float
+        + get_template_id(): String  ' Standardized ID format
+        + is_match(text: String, threshold: float): bool
+    }
+    
+    class BatchJob <<Entity>> {
+        + id: String  ' Standardized ID format: bat_{source}_{timestamp}_{random}
+        + template_id: String  ' Standardized ID format
+        + items: List[Dict[str, Any]]
+        + metadata: Dict[str, Any]
+        + status: BatchStatus
+        + source: String
+        + results: Dict[str, Any]
+        + created_at: DateTime
+        + updated_at: DateTime
+        + completed_at: Optional[DateTime]
+        + error: Optional[Dict[str, Any]]
+        + item_count: int
+        + items_processed: int
+        + items_failed: int
+        --
+        + update_status(status: BatchStatus): void
+        + update_progress(items_processed: int, items_failed: int): void
+        + mark_completed(results: Dict[str, Any]): void
+        + mark_failed(error: Dict[str, Any]): void
+        + is_complete(): bool
+    }
+    
+    class Context <<Entity>> {
+        + id: String  ' Standardized ID format
+        + request_id: Optional[String]  ' Standardized ID format
+        + batch_id: Optional[String]  ' Standardized ID format
+        + data: Dict[str, Any]
+        + metadata: Dict[str, Any]
+        + created_at: DateTime
+        + updated_at: DateTime
+        --
+        + merge(additional_data: Dict[str, Any]): void
+        + get_value(key_path: String): Any
+        + set_value(key_path: String, value: Any): void
+        + is_batch_context(): bool
+        + is_request_context(): bool
+    }
+}
+
+' Value objects package with different styling
+package "Value Objects" #E8F5E9 {
+    class TemplateParameters <<ValueObject>> #E8F5E9 {
+        + required: List[String]
+        + optional: List[String]
+        + validation_rules: Dict[str, Any]
+        --
+        + validate(data: Dict[str, Any]): bool
+        + has_required_fields(data: Dict[str, Any]): bool
+        + get_missing_fields(data: Dict[str, Any]): List[String]
+    }
+
+    class RequestMetadata <<ValueObject>> #E8F5E9 {
+        + priority: String
+        + tags: List[String]
+        + timeout: int
+        + retry_count: int
+        + max_retries: int
+        + custom_fields: Dict[str, Any]
+        --
+        + update_metadata(key: String, value: Any): void
+        + increment_retry_count(): void
+        + can_retry(): bool
+        + get_remaining_retries(): int
+    }
+
+    class ExecutionResult <<ValueObject>> #E8F5E9 {
+        + output: Dict[str, Any]
+        + metrics: Dict[str, Any]
+        + execution_time: float
+        + created_at: DateTime
+        --
+        + is_success(): bool
+        + get_metrics(): Dict[str, Any]
+        + get_performance_data(): Dict[str, Any]
+        + summarize(): String
+    }
+}
+
+' Enums with different styling
+package "Enumerations" #FFF9C4 {
+    enum ExecutionStatus #FFF9C4 {
+        PENDING
+        PROCESSING
+        COMPLETED
+        FAILED
+        CANCELLED
+    }
+
+    enum ServiceType #FFF9C4 {
+        ANALYSIS
+        GENERATIVE
+        COMMUNICATION
+        INTEGRATION
+    }
+
+    enum TemplateStatus #FFF9C4 {
+        DRAFT
+        ACTIVE
+        DEPRECATED
+        ARCHIVED
+    }
+    
+    enum Priority #FFF9C4 {
+        LOW
+        MEDIUM
+        HIGH
+        CRITICAL
+    }
+    
+    enum BatchStatus #FFF9C4 {
+        PENDING
+        PROCESSING
+        COMPLETED
+        FAILED
+        CANCELLED
+    }
+}
+
+' Domain exceptions
+package "Domain Exceptions" #FFCDD2 {
+    class DomainException <<Exception>> #FFCDD2 {
+        + message: String
+        + code: String
+        + details: Dict[str, Any]
+    }
+    
+    class TemplateValidationError <<Exception>> #FFCDD2 {
+        + template_id: String  ' Standardized ID format
+        + validation_errors: List[String]
+    }
+    
+    class RequestProcessingError <<Exception>> #FFCDD2 {
+        + request_id: String  ' Standardized ID format
+        + error_type: String
+        + is_retriable: bool
+    }
+    
+    class PurposeNotFoundError <<Exception>> #FFCDD2 {
+        + text: String
+        + suggestion: String
+    }
+    
+    class BatchProcessingError <<Exception>> #FFCDD2 {
+        + batch_id: String  ' Standardized ID format: bat_{source}_{timestamp}_{random}
+        + error_type: String
+        + affected_items: List[String]  ' Standardized ID format
+    }
+}
+
+' Domain events
+package "Domain Events" #FFE0B2 {
+    class DomainEvent <<Event>> #FFE0B2 {
+        + event_id: String  ' Standardized ID format
+        + timestamp: DateTime
+        + event_type: String
+    }
+    
+    class RequestCreatedEvent <<Event>> #FFE0B2 {
+        + request_id: String  ' Standardized ID format
+        + template_id: String  ' Standardized ID format
+        + user_id: String  ' Standardized ID format
+    }
+    
+    class RequestCompletedEvent <<Event>> #FFE0B2 {
+        + request_id: String  ' Standardized ID format
+        + execution_time: float
+        + result_summary: String
+    }
+    
+    class TemplateChangedEvent <<Event>> #FFE0B2 {
+        + template_id: String  ' Standardized ID format
+        + status: TemplateStatus
+        + changed_by: String  ' Standardized ID format
+    }
+    
+    class BatchJobCompletedEvent <<Event>> #FFE0B2 {
+        + batch_id: String  ' Standardized ID format
+        + template_id: String  ' Standardized ID format
+        + item_count: int
+        + success_count: int
+        + failure_count: int
+        + execution_time: float
+    }
+    
+    class PurposeDetectedEvent <<Event>> #FFE0B2 {
+        + request_id: String  ' Standardized ID format
+        + purpose_id: String  ' Standardized ID format
+        + confidence: float
+        + text: String
+    }
+}
+
+' Relationships between entities
+' Basic entity relationships
+ExecutionTemplate "1" -- "*" Request : processes >
+User "1" -- "*" Request : creates >
+User "1" -- "*" ExecutionTemplate : creates >
+Purpose "1" -- "*" Request : determines >
+ExecutionTemplate "1" -- "*" Purpose : referenced by >
+ExecutionTemplate "1" -- "*" BatchJob : uses >
+BatchJob "1" -- "*" Request : creates >
+Context -- Request : associated with >
+Context -- BatchJob : associated with >
+
+' Value object containment
+ExecutionTemplate *-- TemplateParameters : contains >
+Request *-- RequestMetadata : contains >
+Request *-- "0..1" ExecutionResult : has >
+
+' Enum associations
+Request --> ExecutionStatus : has status >
+ExecutionTemplate --> ServiceType : has type >
+ExecutionTemplate --> TemplateStatus : has status >
+RequestMetadata --> Priority : has priority >
+BatchJob --> BatchStatus : has status >
+
+' Domain events relationships
+Request ..> RequestCreatedEvent : publishes >
+Request ..> RequestCompletedEvent : publishes >
+Request ..> PurposeDetectedEvent : publishes >
+ExecutionTemplate ..> TemplateChangedEvent : publishes >
+BatchJob ..> BatchJobCompletedEvent : publishes >
+
+' Domain exceptions relationships
+ExecutionTemplate ..> TemplateValidationError : throws >
+Request ..> RequestProcessingError : throws >
+Purpose ..> PurposeNotFoundError : throws >
+BatchJob ..> BatchProcessingError : throws >
+
+' Legend
+legend right
+  <b>Type Definitions</b>
+  |= Type |= Description |
+  | <back:#E1F5FE> Entity </back> | Core domain objects with identity and lifecycle |
+  | <back:#E8F5E9> Value Object </back> | Immutable objects without identity |
+  | <back:#FFF9C4> Enumeration </back> | Fixed set of allowed values |
+  | <back:#FFCDD2> Exception </back> | Domain-specific error types |
+  | <back:#FFE0B2> Event </back> | Domain events published when state changes |
+endlegend
+
+@enduml 

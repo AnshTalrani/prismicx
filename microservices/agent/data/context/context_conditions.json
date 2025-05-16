@@ -1,0 +1,52 @@
+{
+  "status": {
+    "created": {
+      "action": "log",
+      "description": "Context has been created"
+    },
+    "processing": {
+      "action": "log",
+      "description": "Context is being processed"
+    },
+    "completed": {
+      "action": "route_to_output",
+      "description": "Context processing has completed successfully",
+      "delete_after": 86400
+    },
+    "failed": {
+      "action": "log_error",
+      "description": "Context processing has failed",
+      "delete_after": 604800
+    },
+    "pending": {
+      "action": "queue",
+      "description": "Context is waiting for processing"
+    }
+  },
+  "tags": {
+    "priority": {
+      "high": {
+        "action": "prioritize",
+        "description": "High priority context"
+      },
+      "low": {
+        "action": "defer",
+        "description": "Low priority context"
+      }
+    },
+    "service": {
+      "generative": {
+        "output_type": "generative_api",
+        "description": "Generative AI service"
+      },
+      "analysis": {
+        "output_type": "analysis_api",
+        "description": "Analysis service"
+      },
+      "communication": {
+        "output_type": "communication_api",
+        "description": "Communication service"
+      }
+    }
+  }
+} 

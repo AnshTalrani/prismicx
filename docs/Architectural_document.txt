@@ -1,5 +1,3 @@
-Certainly! Based on the file structure you've provided, here's a draft of an architecture document for your codebase.
-
 # Architecture Document
 
 ## Overview
@@ -18,6 +16,16 @@ The codebase is organized as follows:
     - **requirements.txt**
     - **src/**
       - **analysis_main.py**
+  - **agent/**
+    - **Dockerfile**
+    - **requirements.txt**
+    - **src/**
+      - **main.py**
+      - **api/**
+      - **application/**
+      - **domain/**
+      - **infrastructure/**
+      - **scheduler/**
 - **monolith/**
   - **main.py**
 
@@ -38,11 +46,30 @@ The codebase is organized as follows:
 #### a. Analysis Base Service
 
 - **Location**: `microservices/analysis-base/src/analysis_main.py`
+- **Description**: Provides data analysis capabilities for the platform.
+- **Responsibilities**:
+  - Processes analytical requests.
+  - Generates insights from data.
 
-#### b. New Microservices
+#### b. Agent Microservice
+
+- **Location**: `microservices/agent/src/`
+- **Description**: Core orchestration service handling requests, templates, and batch processing.
+- **Responsibilities**:
+  - Processes requests following template-defined workflows.
+  - Manages batch processing of requests with various strategies.
+  - Provides context management and persistence.
+  - Schedules and executes batch jobs.
+- **Key Components**:
+  - **BatchProcessor**: Handles processing of batches with different strategies (individual, object, combined).
+  - **BatchScheduler**: Schedules batch jobs with various frequencies (daily, weekly, monthly).
+  - **DefaultContextService**: Manages request contexts and batch references.
+  - **RequestService**: Processes individual requests.
+  - **CategoryRepository**: Provides access to category data for batch processing.
+
+#### c. Other Microservices
 
 - **communication-base**: Manages communication tasks and API integrations.
-- **agent**: Handles agent-related functionalities.
 - **chatbot**: Provides chatbot capabilities for user interaction.
 - **customer-support-bot**: Offers customer support functionalities.
 - **expert-bots**: Hosts expert systems and AI-driven bots.
@@ -50,8 +77,47 @@ The codebase is organized as follows:
 - **management_systems**: Oversees management and administrative tasks.
 - **generative-base**: Focuses on generative AI models and tasks.
 - **marketing-base**: Supports marketing operations and analytics.
+- **user_details**: Manages user insights, profiles, and eligibility. **Responsible for new user setup** with conditional creation based on eligibility criteria (e.g., subscription status).
 
 Each microservice is containerized using Docker and follows the MACH architecture principles.
+
+## Agent Microservice Architecture
+
+The Agent microservice is structured following clean architecture principles:
+
+1. **API Layer** (`src/api/`):
+   - Controllers that handle HTTP requests and responses.
+   - **RequestController**: Handles both individual request processing and batch operations.
+   - **TemplateController**: Manages template operations.
+   - **PurposeController**: Handles purpose-related endpoints.
+   - **JobController**: Manages job scheduling and status.
+   - All controllers expose REST APIs for client interaction.
+
+2. **Application Layer** (`src/application/`):
+   - Service implementations and business logic.
+   - Key services include RequestService, TemplateService, BatchProcessor.
+   - Defines interfaces that infrastructure components implement.
+
+3. **Domain Layer** (`src/domain/`):
+   - Core business entities and value objects.
+   - Includes Request, ExecutionTemplate, BatchType enum, JobConfiguration, etc.
+   - Domain-specific exceptions and events.
+
+4. **Infrastructure Layer** (`src/infrastructure/`):
+   - Concrete implementations of interfaces defined in the application layer.
+   - External service clients (GenerativeClient, AnalysisClient, etc.).
+   - Data persistence implementations.
+
+5. **Scheduler** (`src/scheduler/`):
+   - BatchScheduler for scheduling and managing batch jobs.
+   - CronJobManager for handling job scheduling with cron expressions.
+   - JobStatusTracker for monitoring job execution.
+
+6. **Configuration** (`src/config/`):
+   - BatchConfigLoader for loading and validating job configurations.
+   - ConfigManager for handling system-wide configurations.
+
+## Batch Processing System
 
 ## Infrastructure and Deployment
 
@@ -61,11 +127,11 @@ Each microservice is containerized using Docker and follows the MACH architectur
 - **Monolith**:
   - **Dockerfile**: Located at the root level.
   - **Build Command**: `docker build -t monolith-app .`
-  - **Tag and Push**: `docker tag monolith-app:latest atalrani/ai-saas-platform:latest` and `docker push atalrani/ai-saas-platform:latest`
+  - **Tag and Push**: `docker tag monolith-app:latest username/ai-saas-platform:latest` and `docker push username/ai-saas-platform:latest`
 - **Microservices**:
   - **Dockerfile**: Each microservice has its own Dockerfile.
-  - **Build Command**: Navigate to the microservice directory and run `docker build -t analysis-base-service .`
-  - **Tag and Push**: `docker tag analysis-base:latest atalrani/ai-saas-platform-analysis-base:latest` and `docker push atalrani/ai-saas-platform-analysis-base:latest`
+  - **Build Command**: Navigate to the microservice directory and run `docker build -t service-name .`
+  - **Tag and Push**: `docker tag service-name:latest username/ai-saas-platform-service-name:latest` and `docker push username/ai-saas-platform-service-name:latest`
 
 ### Dependencies Management
 
@@ -74,42 +140,24 @@ Each microservice is containerized using Docker and follows the MACH architectur
 - **Microservice `requirements.txt`**:
   - Each microservice manages its own dependencies to ensure isolation and reduce conflicts.
 
-## Application Workflow
-
-1. **Initialization**:
-   - The monolithic application starts and initializes necessary configurations.
-2. **Request Handling**:
-   - Receives requests or data inputs.
-3. **Service Coordination**:
-   - The monolith delegates tasks to the `analysis-base` microservice when analysis is required.
-4. **Data Processing**:
-   - `analysis_main.py` processes the data.
-5. **Result Aggregation**:
-   - Results from the microservice are collected by the monolith.
-6. **Response Generation**:
-   - The monolith compiles the final output to be returned to the user or system.
-
-## Communication Between Components
-
-- **Inter-process Communication**:
-  - Could be RESTful APIs, message queues, or direct method calls (depending on implementation).
-- **Data Exchange Formats**:
-  - Common formats like JSON or XML for data interchange.
-
 ## MACH Architecture Alignment
 
 ### Microservices-Based
-- The microservices (e.g., the "analysis-base" service) each have focused responsibilities and are independently containerized.
-- To further align with MACH, consider extracting additional functionalities from the monolithic application into separate microservices where feasible.
+- Each microservice has focused responsibilities and is independently containerized.
+- Services communicate through well-defined APIs, enabling independent scaling and deployment.
+- The batch processing system itself is decoupled into components (processor, scheduler, etc.).
 
 ### API-First
-- All services expose well-defined RESTful or similar APIs for communication.
-- The monolith coordinates tasks via these APIs, ensuring loose coupling and enabling external or future clients to integrate easily.
+- All services expose well-defined RESTful APIs for communication.
+- The batch processing system provides API endpoints for creating, monitoring, and managing batch jobs.
+- Interfaces are clearly defined before implementation, ensuring consistent integration.
 
 ### Cloud-Native
-- Docker-based containerization is in place, allowing for seamless deployment across various cloud platforms.
-- Consider leveraging cloud services or orchestration (e.g., Kubernetes) to enhance scalability and reliability.
+- Docker-based containerization enables seamless deployment across various cloud platforms.
+- Statelessness where possible, with persistence handled through appropriate services.
+- Designed for horizontal scaling, with batch processing able to distribute work across instances.
 
 ### Headless
-- The backend services, whether monolith or microservices, remain decoupled from any specific frontend layer.
-- Moving toward a fully headless setup would allow multiple frontends (mobile, web, IoT, etc.) to consume the same APIs for consistent experiences.
+- Backend services remain decoupled from any specific frontend layer.
+- Batch processing results are accessible through APIs and references, not tied to presentation.
+- Multiple frontend applications can consume the same batch processing capabilities. 

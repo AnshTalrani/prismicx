@@ -1,0 +1,35 @@
+FROM python:3.9-slim
+
+WORKDIR /app
+
+# Copy requirements first to leverage Docker cache
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Create directory structure for database layer
+RUN mkdir -p /app/database-layer/common
+
+# Copy database layer common package (containing task client)
+COPY --from=database-layer /app/common /app/database-layer/common
+
+# Install database layer common package
+RUN pip install --no-cache-dir -e /app/database-layer/common
+
+# Copy application code
+COPY . .
+
+# Set environment variables
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+ENV WORKER_ID=${HOSTNAME}
+# Task Repository Service configuration
+ENV TASK_REPO_URL=http://task-repo-service:8503
+ENV TASK_REPO_API_KEY=dev_api_key
+ENV SERVICE_ID=marketing-worker
+
+# Set up non-root user
+RUN useradd -m worker
+USER worker
+
+# Run the task processor
+CMD ["python", "-m", "src.interfaces.workers.task_processor"] 

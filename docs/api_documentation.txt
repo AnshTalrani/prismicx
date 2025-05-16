@@ -1,0 +1,74 @@
+# API Documentation
+
+## User Details Microservice API
+
+The User Details Microservice is responsible for managing user insights and profiles, including the setup of new users in the system.
+
+### User Setup Endpoints
+
+#### Create User Insight
+Creates a new user insight record with conditional eligibility checking.
+
+**Endpoint:** `POST /api/v1/insights/{user_id}`
+
+**Headers:**
+- `X-Tenant-ID` (required): The tenant identifier for multi-tenant isolation
+
+**Response Codes:**
+- 201 Created: User insight created successfully
+- 403 Forbidden: User not eligible for insight creation
+- 400 Bad Request: Missing required headers
+
+**Example Response (Success):**
+```json
+{
+  "user_id": "user123",
+  "tenant_id": "tenant1",
+  "topics": [],
+  "metadata": {},
+  "created_at": "2023-06-15T10:30:00.000Z",
+  "updated_at": "2023-06-15T10:30:00.000Z"
+}
+```
+
+**Example Response (Not Eligible):**
+```json
+{
+  "error": "User not eligible for insight creation",
+  "user_id": "user123"
+}
+```
+
+**Notes:**
+- User eligibility is determined based on subscription status or other defined criteria
+- For more detailed information on the user setup process, refer to `docs/user_setup_process.md`
+
+### User Data Endpoints
+
+#### Get User Insight
+Retrieves a user's complete insight data.
+
+**Endpoint:** `GET /api/v1/insights/{user_id}`
+
+**Headers:**
+- `X-Tenant-ID` (required): The tenant identifier for multi-tenant isolation
+
+**Response Codes:**
+- 200 OK: User insight retrieved successfully
+- 404 Not Found: User insight not found
+- 400 Bad Request: Missing required headers
+
+#### Get User Insight Snapshot
+Creates a condensed view of user insights for quick decision making.
+
+**Endpoint:** `GET /api/v1/insights/{user_id}/snapshot`
+
+**Headers:**
+- `X-Tenant-ID` (required): The tenant identifier for multi-tenant isolation
+
+**Response Codes:**
+- 200 OK: User insight snapshot retrieved successfully
+- 404 Not Found: User insight not found
+- 400 Bad Request: Missing required headers
+
+For additional endpoints related to user details, please consult the full API specification.

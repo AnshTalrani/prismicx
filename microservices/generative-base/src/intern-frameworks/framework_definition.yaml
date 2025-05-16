@@ -1,0 +1,170 @@
+# framework_definition.yaml
+# Master configuration document that controls the entire generative framework
+# AI interns should modify this file to enable/disable modules or create new processing flows
+
+framework:
+  name: "GenerativeBase"
+  version: "1.0.0"
+  description: "AI-driven content generation and processing pipeline"
+  
+  # Core system configuration
+  system:
+    log_level: "INFO"  # Options: DEBUG, INFO, WARNING, ERROR
+    telemetry_enabled: true
+    cache_enabled: true
+    cache_ttl_minutes: 60
+    max_parallel_processes: 4
+    timeout_seconds: 120
+  
+  # Module registry - all available processing modules
+  modules:
+    # Input processing modules
+    - id: "input_preprocessing"
+      path: "modules/input_preprocessing.yaml"
+      enabled: true
+      description: "Cleans and normalizes input data"
+      
+    - id: "deep_input_fusion"
+      path: "modules/deep_input_fusion.yaml"
+      enabled: true
+      description: "Combines multiple input sources into a coherent context"
+    
+    - id: "content_extraction"
+      path: "modules/content_extraction.yaml"
+      enabled: true
+      description: "Extracts structured data from unstructured inputs"
+    
+    # Core generation modules
+    - id: "context_expansion"
+      path: "modules/context_expansion.yaml"
+      enabled: true
+      description: "Expands input context with relevant information"
+      
+    - id: "high_quality_output"
+      path: "modules/high_quality_output.yaml"
+      enabled: true
+      description: "Generates polished, high-quality content"
+    
+    # Enhancement modules
+    - id: "fact_verification"
+      path: "modules/fact_verification.yaml"
+      enabled: true
+      description: "Verifies factual accuracy of generated content"
+    
+    - id: "tone_adjustment"
+      path: "modules/tone_adjustment.yaml"
+      enabled: true
+      description: "Adjusts the tone of generated content"
+      
+    - id: "content_expansion"
+      path: "modules/content_expansion.yaml"
+      enabled: true
+      description: "Expands generated content with additional details"
+      
+    - id: "summarization"
+      path: "modules/summarization.yaml"
+      enabled: true
+      description: "Creates concise summaries of longer content"
+      
+    # Output processing modules
+    - id: "format_conversion"
+      path: "modules/format_conversion.yaml"
+      enabled: true
+      description: "Converts content between different formats"
+      
+    - id: "quality_assurance"
+      path: "modules/quality_assurance.yaml"
+      enabled: true
+      description: "Performs final quality checks on generated content"
+  
+  # Standard processing flows
+  flows:
+    - id: "standard_generation"
+      name: "Standard Content Generation"
+      description: "Complete pipeline for high-quality content generation"
+      modules:
+        - id: "input_preprocessing"
+          config_override: {}
+        - id: "deep_input_fusion"
+          config_override: {}
+        - id: "context_expansion"
+          config_override: {}
+        - id: "high_quality_output"
+          config_override: {}
+        - id: "fact_verification"
+          config_override: {}
+        - id: "quality_assurance"
+          config_override: {}
+    
+    - id: "extraction_flow"
+      name: "Data Extraction"
+      description: "Extract structured data from unstructured inputs"
+      modules:
+        - id: "input_preprocessing"
+          config_override: {}
+        - id: "content_extraction"
+          config_override: {
+            "extraction_depth": "detailed",
+            "output_format": "json"
+          }
+    
+    - id: "summarization_flow"
+      name: "Content Summarization"
+      description: "Generate concise summaries of longer content"
+      modules:
+        - id: "input_preprocessing"
+          config_override: {}
+        - id: "summarization"
+          config_override: {
+            "summary_type": "executive",
+            "target_length": "brief"
+          }
+    
+    - id: "expansion_flow"
+      name: "Content Expansion"
+      description: "Expand brief content with additional details"
+      modules:
+        - id: "input_preprocessing"
+          config_override: {}
+        - id: "content_expansion"
+          config_override: {
+            "expansion_factor": 3.0,
+            "maintain_style": true
+          }
+  
+  # Custom parameter templates
+  parameter_templates:
+    - id: "blog_post"
+      description: "Parameters for blog post generation"
+      parameters:
+        tone: "conversational"
+        length: "medium"
+        include_headings: true
+        include_conclusion: true
+        target_audience: "general"
+    
+    - id: "technical_document"
+      description: "Parameters for technical documentation"
+      parameters:
+        tone: "professional"
+        length: "detailed"
+        include_examples: true
+        technical_level: "advanced"
+        format: "markdown"
+    
+    - id: "social_media"
+      description: "Parameters for social media content"
+      parameters:
+        tone: "engaging"
+        length: "short"
+        include_hashtags: true
+        platform: "general"
+  
+  # Error handling configuration
+  error_handling:
+    strategy: "continue_with_fallback"  # Options: fail_fast, continue, continue_with_fallback
+    max_retries: 3
+    retry_delay_seconds: 5
+    fallback_module_mapping:
+      "deep_input_fusion": "input_preprocessing"
+      "high_quality_output": "summarization" 

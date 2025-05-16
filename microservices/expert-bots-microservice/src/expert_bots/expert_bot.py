@@ -32,14 +32,11 @@ class ExpertBot(ABC):
         pass
 
     @abstractmethod
-    def process(self, request: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Processes the incoming request and generates a response.
+    def get_prompt_strategy(self, intent: str) -> str:
+        """Get appropriate prompt strategy based on intent"""
+        pass
 
-        Args:
-            request (Dict[str, Any]): Incoming request with parameters.
-
-        Returns:
-            Dict[str, Any]: Generated response.
-        """
+    @abstractmethod
+    def process(self, request: Dict) -> Dict:
+        """Process request with intent-specific strategy"""
         pass 

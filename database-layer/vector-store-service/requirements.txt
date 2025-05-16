@@ -1,0 +1,18 @@
+fastapi==0.95.1
+uvicorn==0.22.0
+pydantic==1.10.8
+python-dotenv==1.0.0
+httpx==0.24.1
+langchain==0.0.200
+langchain-community==0.0.5
+faiss-cpu==1.7.4
+sentence-transformers==2.2.2
+hnswlib==0.7.0
+chromadb==0.4.6
+pymongo==4.4.0
+redis==4.5.5
+tenacity==8.2.2
+python-multipart==0.0.6
+qdrant-client==1.2.0
+rank-bm25==0.2.2  # For keyword search in hybrid retrieval
+scikit-learn==1.2.2  # For text processing and metrics 

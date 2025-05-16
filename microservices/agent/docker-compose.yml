@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - CONTEXT_CONDITIONS_PATH=/app/data/context/context_conditions.json
+      - CONTEXT_CLEANUP_INTERVAL_HOURS=24
+      - COMPLETED_CONTEXT_TTL=86400
+      - FAILED_CONTEXT_TTL=604800
+      - BATCH_MAX_CONCURRENT_ITEMS=5
+      - BATCH_RETRY_LIMIT=3
+      # Task Repository Service connection
+      - TASK_REPOSITORY_URL=http://task-repo-service:8503/api/v1
+      - TASK_REPOSITORY_API_KEY=dev_api_key
+      - SERVICE_ID=agent-microservice
+      # Category Repository Service connection
+      - CATEGORY_REPOSITORY_URL=http://category-repository-service:8080/api/v1
+      - CATEGORY_REPOSITORY_API_KEY=dev_api_key
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    networks:
+      - agent-network
+      - database-net
+
+  redis:
+    image: redis:6.2-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - agent-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Optional Mongo Express for database management
+  mongo-express:
+    image: mongo-express
+    restart: always
+    ports:
+      - "8081:8081"
+    environment:
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=root
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=example
+      - ME_CONFIG_MONGODB_URL=mongodb://root:example@mongodb:27017/
+    depends_on:
+      - mongodb
+    networks:
+      - agent-network
+
+volumes:
+  redis_data:
+
+networks:
+  agent-network:
+    driver: bridge
+  database-net:
+    external: true
+    name: database-layer_system-db-net 

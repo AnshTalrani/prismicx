@@ -12,15 +12,15 @@ class TestManagementMain(unittest.TestCase):
     Test suite for the management_systems microservice main function.
     """
 
-    @patch.dict(os.environ, {"MANAGEMENT_API_KEY": "dummy_api_key"})
+    @patch.dict(os.environ, {"MANAGEMENT_API_KEY": "dummy_api_key", "USER_ID": "test_user"})
     def test_main_success(self):
         try:
             main()
         except Exception as e:
             self.fail(f"main() raised an unexpected exception: {e}")
 
-    @patch.dict(os.environ, {}, clear=True)
-    def test_main_missing_env_var(self):
+    @patch.dict(os.environ, {"MANAGEMENT_API_KEY": "dummy_api_key"}, clear=True)
+    def test_main_missing_user(self):
         with self.assertRaises(EnvironmentError):
             main()
 

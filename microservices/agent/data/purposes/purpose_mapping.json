@@ -1,0 +1,40 @@
+{
+  "insta.post.generation": {
+    "id": "IPG001",
+    "service_type": "GENERATIVE",
+    "template_id": "instagram_post_generator",
+    "keywords": [
+      "create instagram post", 
+      "generate instagram post", 
+      "instagram content",
+      "make instagram post",
+      "insta post"
+    ],
+    "description": "Generates Instagram posts based on user input"
+  },
+  "insta.post.analysis": {
+    "id": "IPA001", 
+    "service_type": "ANALYSIS",
+    "template_id": "instagram_post_analyzer",
+    "keywords": [
+      "analyze instagram post", 
+      "post performance", 
+      "instagram analytics",
+      "analyze post engagement",
+      "post statistics"
+    ],
+    "description": "Analyzes Instagram post performance and engagement"
+  },
+  "email.draft.generation": {
+    "id": "EDG001",
+    "service_type": "GENERATIVE",
+    "template_id": "email_draft_generator",
+    "keywords": [
+      "draft email",
+      "write email",
+      "compose message",
+      "email draft"
+    ],
+    "description": "Generates draft emails based on user input"
+  }
+}

@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  # Task Repository Service for centralized task management
+  task-repo-service:
+    build:
+      context: ./database-layer/task-repo-service
+      dockerfile: Dockerfile
+    container_name: task-repo-service
+    ports:
+      - "8503:8503"
+    environment:
+      - MONGODB_URI=mongodb://task_service:password@mongodb:27017/task_repository
+      - MONGODB_DATABASE=task_repository
+      - MONGODB_TASKS_COLLECTION=tasks
+      - API_KEY=dev_api_key
+      - HOST=0.0.0.0
+      - PORT=8503
+      - SERVICE_NAME=task-repo-service
+    depends_on:
+      - mongodb
+    networks:
+      - marketing_network
+
+  # MongoDB service for multi-client database
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+      # Init for task repository
+      MONGO_INITDB_DATABASE: task_repository
+    networks:
+      - marketing_network
+
+  # Marketing base service - API only
+  marketing-base:
+    build:
+      context: ./microservices/marketing-base
+      dockerfile: Dockerfile
+    container_name: marketing-base
+    volumes:
+      - ./microservices/marketing-base:/app
+    depends_on:
+      - mongodb
+      - task-repo-service
+    environment:
+      - MONGODB_URI=mongodb://root:example@mongodb:27017
+      - LOG_LEVEL=INFO
+      - TASK_REPO_URL=http://task-repo-service:8503
+      - TASK_REPO_API_KEY=dev_api_key
+      - SERVICE_ID=marketing-api-service
+    networks:
+      - marketing_network
+    ports:
+      - "5000:5000"
+    command: python -m src.marketing_main
+
+  # Batch campaign workers - scales horizontally
+  batch-worker:
+    build:
+      context: ./microservices/marketing-base
+      dockerfile: Dockerfile.worker
+    deploy:
+      replicas: 3  # Run multiple instances for parallel processing
+    volumes:
+      - ./microservices/marketing-base:/app
+    depends_on:
+      - mongodb
+      - task-repo-service
+    environment:
+      - MONGODB_URI=mongodb://root:example@mongodb:27017
+      - WORKER_TYPE=batch
+      - LOG_LEVEL=INFO
+      - TASK_REPO_URL=http://task-repo-service:8503
+      - TASK_REPO_API_KEY=dev_api_key
+      - SERVICE_ID=marketing-worker-${REPLICA_ID:-1}
+    networks:
+      - marketing_network
+    restart: unless-stopped
+
+  # API Gateway service
+  api-gateway:
+    build:
+      context: ./microservices/api-gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    ports:
+      - "8000:8000"
+    depends_on:
+      - marketing-base
+    environment:
+      - MARKETING_BASE_URL=http://marketing-base:5000
+      - LOG_LEVEL=INFO
+    networks:
+      - marketing_network
+
+volumes:
+  mongodb_data:
+
+networks:
+  marketing_network:
+    driver: bridge 

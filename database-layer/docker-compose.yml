@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  # ... existing services ...
+
+  # Vector Store Service
+  vector-store-service:
+    build: ./vector-store-service
+    container_name: vector-store-service
+    ports:
+      - "8510:8510"
+    environment:
+      - MONGODB_URL=mongodb://mongodb-system:27017
+      - TENANT_MGMT_URL=http://tenant-mgmt-service:8501
+      - VECTOR_STORE_DIR=/app/data/vector_stores
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./data/vector_stores:/app/data/vector_stores
+    networks:
+      - tenant-db-net
+      - service-network
+    depends_on:
+      - mongodb-system
+    restart: unless-stopped
+
+# ... existing networks ... 

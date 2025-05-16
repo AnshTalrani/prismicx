@@ -1,13 +1,62 @@
 # Purpose: Lists the Python dependencies for the agent microservice.
 
-fastapi
-uvicorn
-requests
-pydantic
-pytest
+# API Framework
+fastapi==0.95.0
+uvicorn==0.21.1
+pydantic==1.10.7
+email-validator==2.0.0
+
+# Database Drivers
+# Removed pymongo/motor as we're using task repository service
+redis==4.5.5
+
+# Utilities
+python-dotenv==1.0.0
+pyyaml==6.0
+python-multipart==0.0.6
+httpx==0.23.0
+
+# Async support
+aiohttp==3.8.4
+aiobotocore==2.5.0
+asgiref==3.6.0
+
+# Serialization/Parsing
+ujson==5.7.0
+orjson==3.8.7
+
+# Security
+passlib==1.7.4
+python-jose==3.3.0
+cryptography==40.0.2
+bcrypt==4.0.1
+
+# Monitoring and Logging
+prometheus-client==0.17.0
+python-json-logger==2.0.7
+
+# Testing
+pytest==7.3.1
+pytest-asyncio==0.21.0
+pytest-cov==4.1.0
+
+# Development
+black==23.3.0
+isort==5.12.0
+mypy==1.3.0
+flake8==6.0.0
+
+# Task Repository Client
+-e ../database-layer/common/
+
 # Removed dependencies related to observability
 # open-telemetry-api
 # open-telemetry-sdk
 jsonschema
 spacy
 # Add any other dependencies as needed
+
+# New dependencies
+tenacity==8.1.0
+asyncio==3.4.3
+asyncpg==0.27.0

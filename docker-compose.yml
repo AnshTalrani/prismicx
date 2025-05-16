@@ -1,6 +1,28 @@
 version: '3.9'
 
 services:
+  # First include task repository service
+  task-repo-service:
+    build:
+      context: .
+      dockerfile: database-layer/task-repo-service/Dockerfile
+    container_name: task-repo-service
+    restart: unless-stopped
+    ports:
+      - "8503:8503"
+    environment:
+      - MONGODB_URI=mongodb://task_service:password@mongodb:27017/task_repository
+      - MONGODB_DATABASE=task_repository
+      - MONGODB_TASKS_COLLECTION=tasks
+      - API_KEY=dev_api_key
+      - HOST=0.0.0.0
+      - PORT=8503
+      - SERVICE_NAME=task-repo-service
+    networks:
+      - mongo-net
+    depends_on:
+      - mongodb
+      
   monolith:
     build: .
     container_name: monolith
@@ -12,12 +34,40 @@ services:
 
   analysis-base:
     build:
-      context: ./microservices/analysis-base
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: microservices/analysis-base/Dockerfile
     container_name: analysis-base
     ports:
       - "8100:8100"
-    command: uvicorn src.analysis_main:app --host 0.0.0.0 --port 8100 
+    command: uvicorn analysis_main:api_app --host 0.0.0.0 --port 8100
+    environment:
+      # Task Repository Service configuration
+      - TASK_REPO_URL=http://task-repo-service:8503
+      - TASK_REPO_API_KEY=dev_api_key
+      - SERVICE_ID=analysis-service
+      # PostgreSQL configuration
+      - DB_HOST=postgres-system
+      - DB_PORT=5432
+      - DB_NAME=analysis_db
+      - DB_USER=analysis_service
+      - DB_PASSWORD=password
+      # Tenant Management Service configuration
+      - TENANT_MGMT_URL=http://tenant-mgmt-service:8501
+      - TENANT_MGMT_API_KEY=dev_api_key
+      # User Data Service configuration
+      - USER_DATA_URL=http://user-data-service:8502
+      - USER_DATA_API_KEY=dev_api_key
+      # JWT configuration
+      - JWT_SECRET=development-secret
+      - JWT_ALGORITHM=HS256
+    networks:
+      - mongo-net
+      - system-db-net    # For PostgreSQL and tenant services
+    depends_on:
+      - task-repo-service
+      - postgres-system
+      - tenant-mgmt-service
+      - user-data-service
 
   generative-base:
     environment:
@@ -25,8 +75,14 @@ services:
       USER_DETAILS_URL: "http://user-details:5000"
       BATCH_WORKERS: "4"
       BATCH_TIMEOUT: "300"
+      TASK_REPO_URL: "http://task-repo-service:8503"
+      TASK_REPO_API_KEY: "dev_api_key"
+      SERVICE_ID: "generative-service"
     networks:
       - generative-net
+      - mongo-net
+    depends_on:
+      - task-repo-service
 
   expert-bots:
     networks:
@@ -37,9 +93,162 @@ services:
       - generative-net
 
   agent:
+    build:
+      context: .
+      dockerfile: microservices/agent/Dockerfile
+    container_name: agent
+    ports:
+      - "8080:8000"
     environment:
       PROCESSING_MODES: "realtime,batch"
       MAX_BATCH_SIZE: "10000"
+      TASK_REPO_URL: "http://task-repo-service:8503"
+      TASK_REPO_API_KEY: "dev_api_key"
+      SERVICE_ID: "agent-service"
+      # Config Database Integration
+      CONFIG_SERVICE_URL: "http://config-service:8000/api/v1"
+      CONFIG_SERVICE_API_KEY: "${CONFIG_API_KEY:-dev_config_key}"
+      CONFIG_CACHE_TTL: "3600"
+      CONFIG_POLL_INTERVAL: "60"
+      BATCH_MAX_CONCURRENT_ITEMS: "25"
+      BATCH_RETRY_LIMIT: "3"
+      # User Database Connection
+      USER_DB_HOST: "postgres-system"
+      USER_DB_PORT: "5432"
+      USER_DB_USER: "user_service"
+      USER_DB_PASSWORD: "password"
+      USER_DB_NAME: "system_users"
+    networks:
+      - mongo-net
+      - management-net    # Add management network for config service access
+      - communication-net  # Add communication network to connect with communication-base
+      - system-db-net     # Add system database network for user database access
+    depends_on:
+      - task-repo-service
+      - mongodb
+      - management-systems    # Add dependency on management systems
+      - postgres-system       # Add dependency on postgres-system for user database
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    volumes:
+      - mongo_data:/data/db
+      - ./database-layer/init-scripts/mongo:/docker-entrypoint-initdb.d
+    networks:
+      - generative-net
+      - mongo-net
+
+  agent-service:
+    image: agent:latest
+    container_name: agent-service
+    restart: unless-stopped
+    environment:
+      - MANAGED_SERVICES_API_KEY=${MANAGED_SERVICES_API_KEY}
+      - TENANT_MGMT_API_KEY=${TENANT_MGMT_API_KEY}
+    networks:
+      - management-net
+      - system-db-net
+    depends_on:
+      - management-systems
+      - tenant-mgmt-service
+
+  management-systems:
+    image: management-systems:latest
+    container_name: management-systems
+    restart: unless-stopped
+    environment:
+      - TENANT_MGMT_URL=http://tenant-mgmt-service:8501
+      - TENANT_MGMT_API_KEY=${TENANT_MGMT_API_KEY}
+      - LOG_LEVEL=INFO
+      - REDIS_URL=redis://redis:6379/0
+      - CACHE_TTL=3600
+      - MAX_CONNECTIONS=100
+      - RATE_LIMIT_ENABLED=true
+      - RATE_LIMIT_REQUESTS=1000
+      - RATE_LIMIT_DURATION=60
+    networks:
+      - system-db-net
+      - management-net
+      - cache-net
+    depends_on:
+      - tenant-mgmt-service
+      - redis
+
+  # Tenant Management Service
+  tenant-mgmt-service:
+    image: tenant-mgmt-service:latest
+    container_name: tenant-mgmt-service
+    restart: unless-stopped
+    ports:
+      - "8501:8501"
+    environment:
+      - TENANT_MONGODB_URI=mongodb://admin:password@mongodb:27017
+      - TENANT_REGISTRY_DB=tenant_registry
+      - TENANT_SERVICE_HOST=0.0.0.0
+      - TENANT_SERVICE_PORT=8501
+      - TENANT_SERVICE_LOG_LEVEL=INFO
+    networks:
+      - system-db-net
+      - tenant-db-net
+    depends_on:
+      - mongodb-system
+
+  # MongoDB System Database
+  mongodb-system:
+    image: mongo:latest
+    container_name: mongodb-system
+    restart: unless-stopped
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    volumes:
+      - mongodb_system_data:/data/db
+      - ./database-layer/init-scripts/mongo:/docker-entrypoint-initdb.d
+    networks:
+      - system-db-net
+
+  # Add communication-base service
+  communication-base:
+    build:
+      context: .
+      dockerfile: microservices/communication-base/Dockerfile
+    container_name: communication-base
+    restart: unless-stopped
+    ports:
+      - "8090:8090"
+    environment:
+      - MONGODB_URI=mongodb://admin:password@mongodb:27017/communication
+      - LOG_LEVEL=INFO
+      - CAMPAIGN_POLL_INTERVAL_SECONDS=30
+      # Agent microservice connection
+      - AGENT_API_URL=http://agent:8000
+      - AGENT_API_KEY=${AGENT_API_KEY:-dev_agent_key}
+      - AGENT_API_TIMEOUT=30
+    networks:
+      - mongo-net
+      - communication-net  # Add communication network to connect with agent
+    depends_on:
+      - mongodb
+      - agent
+
+  # Redis Cache Service
+  redis:
+    image: redis:alpine
+    container_name: redis-cache
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks:
+      - cache-net
 
 networks:
   generative-net:
@@ -48,3 +257,24 @@ networks:
     ipam:
       config:
         - subnet: 172.28.0.0/16 
+  management-net:
+    driver: bridge
+  mongo-net:
+    driver: bridge
+  system-db-net:
+    driver: bridge
+  tenant-db-net:
+    driver: bridge
+  cache-net:
+    driver: bridge
+  communication-net:
+    driver: bridge
+    name: communication-net
+
+volumes:
+  mongo_data:
+    driver: local
+  mongodb_system_data:
+    driver: local
+  redis_data:
+    driver: local 

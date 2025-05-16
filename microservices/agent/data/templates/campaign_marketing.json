@@ -1,0 +1,154 @@
+{
+  "id": "campaign-holiday-2023",
+  "name": "Sample Marketing Campaign",
+  "description": "A comprehensive marketing campaign template to demonstrate the structure",
+  "from_email": "marketing@example.com",
+  "reply_to": "support@example.com",
+  "subject": "Welcome to our {{product_data.product_name}} Program!",
+  
+  "campaign": {
+    "segment_id": "segment_id_placeholder",
+    "stages": [
+      "email_welcome",
+      "sms_reminder",
+      "email_promotion",
+      "follow_up"
+    ],
+    "templates": {
+      "email_welcome": "welcome_template_id",
+      "sms_reminder": "reminder_template_id",
+      "email_promotion": "promotion_template_id",
+      "follow_up": "follow_up_template_id"
+    },
+    "product_data": {
+      "product_id": "product_123",
+      "product_name": "Premium Subscription",
+      "price": 99.99,
+      "features": [
+        "24/7 Support",
+        "Advanced Analytics",
+        "Custom Integrations",
+        "Unlimited Storage"
+      ],
+      "discount_percentage": 15,
+      "promotion_end_date": "2023-12-31"
+    },
+    "scheduled_at": "2023-11-01T10:00:00Z",
+    "status": "DRAFT"
+  },
+  
+  "segment_details": {
+    "segment_id": "segment_id_placeholder",
+    "segment_name": "High Value Customers",
+    "segment_description": "Customers who have spent over $500 in the last 6 months",
+    "segment_criteria": {
+      "total_spend": {
+        "operator": "greater_than",
+        "value": 500
+      },
+      "time_period": {
+        "operator": "less_than",
+        "unit": "months",
+        "value": 6
+      },
+      "account_status": {
+        "operator": "equals",
+        "value": "active"
+      }
+    }
+  },
+  
+  "templates": {
+    "welcome_template": {
+      "template_id": "welcome_template_id",
+      "subject": "Welcome to our {{product_data.product_name}} Program!",
+      "content_type": "email",
+      "body": "Hello {{user_data.first_name}},\n\nWelcome to our {{product_data.product_name}} program! We're excited to have you on board.\n\nYou now have access to {{product_data.features|join(', ')}}.\n\nIf you have any questions, please don't hesitate to contact our support team.\n\nBest regards,\nThe Marketing Team",
+      "from_name": "Marketing Team",
+      "reply_to": "support@example.com"
+    },
+    "reminder_template": {
+      "template_id": "reminder_template_id",
+      "content_type": "sms",
+      "body": "Hi {{user_data.first_name}}, just a reminder about your {{product_data.product_name}}. Don't forget to check out the latest features!"
+    },
+    "promotion_template": {
+      "template_id": "promotion_template_id",
+      "subject": "Special Offer for {{user_data.first_name}}!",
+      "content_type": "email",
+      "body": "Hello {{user_data.first_name}},\n\nWe're excited to offer you a special {{product_data.discount_percentage}}% discount on your {{product_data.product_name}} subscription!\n\nThis offer is valid until {{product_data.promotion_end_date}}.\n\nClick here to claim your discount: {{tracking_url}}\n\nBest regards,\nThe Marketing Team",
+      "from_name": "Special Offers",
+      "reply_to": "offers@example.com"
+    },
+    "follow_up_template": {
+      "template_id": "follow_up_template_id",
+      "subject": "How are you enjoying {{product_data.product_name}}?",
+      "content_type": "email",
+      "body": "Hello {{user_data.first_name}},\n\nWe wanted to check in and see how you're enjoying your {{product_data.product_name}} subscription.\n\nWould you mind taking a quick survey to help us improve our service? {{survey_url}}\n\nThank you for your continued support!\n\nBest regards,\nThe Customer Success Team",
+      "from_name": "Customer Success",
+      "reply_to": "feedback@example.com"
+    }
+  },
+  
+  "ab_testing": {
+    "enabled": true,
+    "variants": [
+      {
+        "variant_id": "variant_a",
+        "template_id": "promotion_template_id",
+        "subject": "Special {{product_data.discount_percentage}}% Discount Just For You!",
+        "weight": 50
+      },
+      {
+        "variant_id": "variant_b",
+        "template_id": "promotion_template_id",
+        "subject": "Limited Time Offer: Save {{product_data.discount_percentage}}% Today",
+        "weight": 50
+      }
+    ],
+    "success_metric": "click_rate"
+  },
+  
+  "analytics": {
+    "track_opens": true,
+    "track_clicks": true,
+    "track_conversions": true,
+    "conversion_goal": "purchase",
+    "conversion_value": "{{product_data.price * (1 - product_data.discount_percentage/100)}}"
+  },
+  
+  "batch_processing": {
+    "batch_size": 50,
+    "retry_config": {
+      "max_retries": 3,
+      "retry_delay_seconds": 300
+    }
+  },
+  
+  "workflow": {
+    "on_stage_completion": "proceed_to_next",
+    "on_user_action": {
+      "click": "mark_engaged",
+      "purchase": "mark_converted",
+      "unsubscribe": "remove_from_campaign"
+    },
+    "wait_periods": {
+      "email_welcome_to_sms_reminder": {
+        "days": 3
+      },
+      "sms_reminder_to_email_promotion": {
+        "days": 2
+      },
+      "email_promotion_to_follow_up": {
+        "days": 7
+      }
+    }
+  },
+  
+  "tags": ["holiday", "promotion", "high-value", "2023"],
+  "custom_attributes": {
+    "campaign_owner": "Jane Smith",
+    "department": "Product Marketing",
+    "priority": "high"
+  }
+}

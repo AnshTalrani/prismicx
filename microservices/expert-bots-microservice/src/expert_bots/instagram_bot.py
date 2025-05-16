@@ -7,27 +7,36 @@ from src.expert_bots.expert_bot import ExpertBot
 from src.utils.logger import Logger
 from transformers import AutoModelForCausalLM
 from peft import PeftModel
+from src.agent.src.error_handling.error_types import IntentNotSupportedError
 
 class InstagramBot(ExpertBot):
-    def __init__(self, lora_adapter: str, knowledge_base: Any, logger: Logger):
+    PROMPT_STRATEGIES = {
+        'pre': "Generate creative strategy for Instagram post...",
+        'pro': "Refactor this content for better engagement...",
+        'post': "Post-publishing checklist:\n1. Hashtag optimization..."
+    }
+
+    def __init__(self, lora_adapter: str, knowledge_base: Any, logger: Logger, config: Dict = None):
         """
-        Initializes the InstagramBot with its LoRA adapter and KnowledgeBase.
+        Initializes the InstagramBot with its LoRA adapter, KnowledgeBase, and configuration.
 
         Args:
             lora_adapter (str): Path to the Instagram LoRA adapter.
             knowledge_base (Any): Instance of KnowledgeBaseComponent.
             logger (Logger): Logger instance for logging activities.
+            config (Dict, optional): Configuration for generation parameters.
         """
         super().__init__(lora_adapter, knowledge_base)
         self.logger = logger
+        self.config = config or {}
 
-    def load_model(self, lora_adapter: str) -> AutoModelForCausalLM:
+    def load_model(self, lora_adapter: str):
         """
         Loads the fine-tuned Instagram LLM using the specified LoRA adapter.
-
+    
         Args:
             lora_adapter (str): Path to the Instagram LoRA adapter.
-
+    
         Returns:
             AutoModelForCausalLM: Loaded LLM model.
         """
@@ -35,27 +44,33 @@ class InstagramBot(ExpertBot):
         instagram_adapter = PeftModel.from_pretrained(base_model, lora_adapter)
         return instagram_adapter
 
-    def process(self, request: Dict[str, Any]) -> Dict[str, Any]:
+    def get_prompt_strategy(self, intent: str) -> str:
+        if intent not in self.PROMPT_STRATEGIES:
+            raise IntentNotSupportedError(f"InstagramBot doesn't support {intent} intent")
+        return self.PROMPT_STRATEGIES[intent]
+
+    def process(self, request: Dict) -> Dict:
         """
-        Generates an Instagram post based on the request parameters.
+        Generates Instagram-specific content using the fused prompt and generation parameters.
 
         Args:
-            request (Dict[str, Any]): Request containing parameters like theme and details.
+            request (Dict): Request dictionary with a 'formatted_prompt' and generation config.
 
         Returns:
-            Dict[str, Any]: Generated Instagram post.
+            Dict: Output containing generated Instagram content or error details.
         """
         try:
-            # Retrieve Instagram-specific guidelines
-            guidelines = self.knowledge_base.retrieve(
-                intent_tag="instagram_post", 
-                filters={"theme": request.get("theme")}
+            # Use pre-formatted prompt from orchestrator.
+            llm_params = request.get("llm_config", {})
+            generated_content = self.llm.generate(
+                prompt=request['formatted_prompt'],
+                **llm_params
             )
-            # Generate post using fine-tuned LLM
-            prompt = f"Generate Instagram post with: {request.get('details')}. Guidelines: {guidelines}"
-            generated_content = self.llm.generate(prompt)
-            self.logger.log_activity("Instagram post generated successfully.")
-            return {"content": generated_content}
+            return {
+                "expert": "instagram",
+                "intent": request['intent'],
+                "generated_content": generated_content
+            }
         except Exception as e:
-            self.logger.log_error(f"Error in InstagramBot.process: {e}")
-            return {"error": "Failed to generate Instagram post"} 
+            self.logger.log_error(f"InstagramBot error: {e}")
+            return {"error": "Content generation failed"} 

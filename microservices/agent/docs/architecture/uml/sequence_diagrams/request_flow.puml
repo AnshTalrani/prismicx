@@ -1,0 +1,152 @@
+@startuml Request Flow
+
+' Define participants
+actor Client
+participant "API Gateway" as API
+participant "RequestController" as Controller
+participant "RequestService" as RequestService
+participant "DefaultNLPService" as NLPService
+participant "TemplateService" as TempService
+participant "DefaultOrchestrationService" as Orchestration
+participant "ServiceClient\n(Gen/Ana/Comm)" as ServiceClient
+participant "External Service" as ExtService
+participant "DefaultContextService" as ContextService
+participant "LoggingCommunicationService" as CommService
+database "Storage" as Storage
+
+' Define sequence
+Client -> API: Request (with data)
+activate API
+
+API -> Controller: POST /api/v1/process
+activate Controller
+
+Controller -> RequestService: process_request(text, purpose_id, user_id, data, metadata)
+activate RequestService
+
+' Generate request ID and start tracking execution time
+RequestService -> RequestService: Generate request_id, start_time
+
+' Template selection (two possible paths)
+alt Purpose ID provided in request
+    ' Use provided purpose ID
+    note over RequestService: Use provided purpose_id
+else Purpose detection required
+    RequestService -> NLPService: detect_purpose_with_confidence(text)
+    activate NLPService
+    NLPService -> NLPService: keyword_matching_algorithm
+    NLPService -> Storage: Load purposes from repository
+    NLPService <-- Storage: purposes data
+    RequestService <-- NLPService: purpose_id, confidence
+    deactivate NLPService
+end
+
+' Get template based on purpose
+RequestService -> TempService: get_template_by_purpose_id(purpose_id)
+activate TempService
+TempService -> Storage: load_template
+TempService <-- Storage: template data
+RequestService <-- TempService: execution_template
+deactivate TempService
+
+' Create request object and save it
+RequestService -> Storage: save(request)
+activate Storage
+Storage --> RequestService: request saved
+deactivate Storage
+
+' Create context for the request
+RequestService -> ContextService: create_context(request, template)
+activate ContextService
+ContextService -> Storage: persist_context
+ContextService <-- Storage: context stored
+RequestService <-- ContextService: context
+deactivate ContextService
+
+' Template execution via orchestration service
+RequestService -> Orchestration: execute_template(template, context)
+activate Orchestration
+
+' Validate template and context
+Orchestration -> Orchestration: validate_template(template)
+Orchestration -> Orchestration: validate_context(template, context)
+
+' Orchestration delegates to appropriate client based on service type
+Orchestration -> Orchestration: determine service type
+alt Service Type == GENERATIVE
+    Orchestration -> ServiceClient: execute_template(template_id, service_template, context)
+else Service Type == ANALYSIS
+    Orchestration -> ServiceClient: execute_template(template_id, service_template, context)
+else Service Type == COMMUNICATION
+    Orchestration -> ServiceClient: execute_template(template_id, service_template, context)
+end
+activate ServiceClient
+
+' Client communicates with external service
+ServiceClient -> ExtService: Call appropriate service endpoint
+activate ExtService
+ExtService -> ExtService: process request
+ServiceClient <-- ExtService: response
+deactivate ExtService
+
+' Process result and standardize format
+Orchestration -> Orchestration: process_result(template, result)
+
+' Handle responses and propagate back up
+alt service available
+    Orchestration <-- ServiceClient: processing result
+    RequestService <-- Orchestration: standardized result
+else service unavailable
+    ServiceClient -> ServiceClient: generate mock response
+    Orchestration <-- ServiceClient: mock result
+    Orchestration -> Orchestration: process_result(template, mock_result)
+    RequestService <-- Orchestration: standardized mock result
+else error
+    ServiceClient -> ServiceClient: create_error_response
+    Orchestration <-- ServiceClient: error response
+    Orchestration -> Orchestration: create_error_response(template, context, error)
+    RequestService <-- Orchestration: error result
+end
+
+deactivate ServiceClient
+deactivate Orchestration
+
+' Calculate processing duration
+RequestService -> RequestService: calculate_duration()
+
+' Update context with result
+RequestService -> ContextService: update_context(context_id, results)
+activate ContextService
+ContextService -> Storage: persist_updated_context
+ContextService <-- Storage: context updated
+RequestService <-- ContextService: updated context
+deactivate ContextService
+
+' Update request status
+RequestService -> Storage: update_request_status(request_id, "COMPLETED")
+Storage --> RequestService: status updated
+
+' Handle notifications
+alt success
+    RequestService -> CommService: notify_completion(user_id, request_id, result)
+    activate CommService
+    CommService -> CommService: log notification
+    RequestService <-- CommService: notification status
+    deactivate CommService
+else error
+    RequestService -> CommService: notify_error(user_id, request_id, error)
+    activate CommService
+    CommService -> CommService: log error notification
+    RequestService <-- CommService: notification status
+    deactivate CommService
+end
+
+Controller <-- RequestService: processing result
+API <-- Controller: HTTP 200 OK with result
+Client <-- API: Success response
+
+deactivate RequestService
+deactivate Controller
+deactivate API
+
+@enduml 

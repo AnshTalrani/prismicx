@@ -6,6 +6,7 @@ import unittest
 from unittest.mock import MagicMock
 from src.expert_base.expert_base import ExpertBase
 from src.utils.logger import Logger
+from src.expert_bots.instagram_bot import InstagramBot
 
 class TestExpertBase(unittest.TestCase):
     def setUp(self):
@@ -31,6 +32,22 @@ class TestExpertBase(unittest.TestCase):
         request = {"intent_tag": "test_intent", "theme": "test_theme", "details": "test_details"}
         response = self.expert_base.handle_request(request)
         self.assertEqual(response, {"error": "Failed to process the request"})
+
+    def test_intent_routing(self):
+        bot = InstagramBot()
+        expert_base = ExpertBase({"instagram": bot}, self.logger)
+        
+        request = {
+            "expert": "instagram",
+            "intent": "pre",
+            "purpose_objective": "Brand awareness",
+            "guidelines": ["Guideline 1"],
+            "success_metrics": ["Metric 1"],
+            "content": "..."
+        }
+        
+        response = expert_base.handle_request(request)
+        assert "pre" in response['result']
 
 if __name__ == "__main__":
     unittest.main() 

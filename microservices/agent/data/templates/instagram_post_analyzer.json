@@ -1,0 +1,69 @@
+{
+  "id": "instagram_post_analyzer",
+  "version": "1.0",
+  "description": "Analyzes Instagram post performance and engagement metrics",
+  "service_type": "ANALYSIS",
+  "processing_mode": "batch",
+  "analysis_template": {
+    "template_id": "instagram_post_analyzer",
+    "name": "Instagram Post Performance Analysis",
+    "purpose": "Analyze post engagement metrics",
+    "scope": "individual",
+    "trigger": {
+      "type": "manual",
+      "condition": "",
+      "metrics": [
+        "likes", 
+        "comments", 
+        "shares", 
+        "impressions", 
+        "reach", 
+        "saves"
+      ]
+    },
+    "input_spec": {
+      "data_source": "instagram_api",
+      "query": "SELECT * FROM posts WHERE post_id = ?",
+      "filters": {
+        "post_type": "image",
+        "time_range": "last_30_days"
+      },
+      "segmentation": {
+        "by_audience": true,
+        "by_time": true
+      }
+    },
+    "processing": {
+      "analysis_type": "descriptive",
+      "algorithm": "engagement_metrics",
+      "parameters": {
+        "normalization": true,
+        "benchmark_against": "account_average",
+        "compare_to_previous": true
+      },
+      "dependency_triggers": null
+    },
+    "output": {
+      "metadata_fields": [
+        "post_id", 
+        "post_timestamp", 
+        "account_id"
+      ],
+      "tags": [
+        "engagement", 
+        "reach", 
+        "performance"
+      ],
+      "store_in": "analytics_db"
+    },
+    "error_handling": {
+      "retry": 3,
+      "fallback": "log_error"
+    },
+    "version": "1.0",
+    "last_updated": "2024-01-01T00:00:00Z"
+  },
+  "created_by": "system",
+  "created_at": "2024-01-01T00:00:00Z",
+  "updated_at": "2024-01-01T00:00:00Z"
+} 

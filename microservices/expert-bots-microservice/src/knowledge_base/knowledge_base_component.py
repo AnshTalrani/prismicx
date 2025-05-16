@@ -1,5 +1,6 @@
 """
 KnowledgeBaseComponent for managing domain-specific guidelines.
+
 """
 
 from typing import List, Dict, Any

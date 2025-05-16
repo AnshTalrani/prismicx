@@ -1,0 +1,345 @@
+{
+  "template_type": "campaign",
+  "global_settings": {
+    "follow_up_days": 3,
+    "reminder_count": 1,
+    "escalation_threshold": 0.8,
+    "timing_settings": {
+      "timezone": "UTC",
+      "business_hours": {
+        "start_hour": 9,
+        "end_hour": 17,
+        "working_days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+      },
+      "optimal_send_times": ["10:00", "14:00", "16:00"],
+      "global_cooldown_hours": 24,
+      "response_wait_time_hours": 48,
+      "follow_up_strategy": {
+        "default_max_attempts": 3,
+        "default_interval_hours": 48,
+        "escalation_timing": {
+          "manager_escalation_after_attempts": 3,
+          "manager_response_time_hours": 24
+        },
+        "reschedule_policy": {
+          "after_no_response_days": 14,
+          "max_reschedule_attempts": 2
+        }
+      }
+    },
+    "personalization": {
+      "fields": ["user_name", "past_purchases", "loyalty_tier"],
+      "rules": [
+        {
+          "condition": "loyalty_tier == 'gold'",
+          "modifications": {
+            "headline_prefix": "Exclusive: "
+          }
+        }
+      ]
+    }
+  },
+  "stages": [
+    {
+      "stage": "awareness",
+      "content_structure": {
+        "headline": "Discover {{product_name}}",
+        "body": "{{intro}} Our {{product_category}} can help you {{benefit}}.",
+        "cta_button": "Learn More"
+      },
+      "variables": {
+        "intro_templates": ["Hello {{user_name}},", "Hi there,", "Greetings,"],
+        "benefit_templates": ["save time", "increase productivity", "reduce costs"]
+      },
+      "completion_criteria": {
+        "email_opens": 100,
+        "link_clicks": 50
+      },
+      "follow_up_timing": {
+        "initial_delay_hours": 24,
+        "max_follow_ups": 2,
+        "follow_up_interval_hours": 48,
+        "session_timeout_minutes": 30,
+        "escalation_after_attempts": 2,
+        "time_in_stage_before_next_stage_days": 7,
+        "best_days": ["Tuesday", "Wednesday"],
+        "message_spacing_minutes": 5,
+        "time_of_day_preferences": ["morning", "early_afternoon"],
+        "follow_up_message_templates": {
+          "first_follow_up": "Just checking in regarding our previous message about {{product_name}}.",
+          "second_follow_up": "I wanted to make sure you received our information about how {{product_name}} can help with {{benefit}}."
+        },
+        "engagement_based_timing": {
+          "email_open_follow_up_hours": 4,
+          "link_click_follow_up_hours": 2
+        }
+      },
+      "session_open_after_initial_message": "50s",
+      "conversation_guidance": {
+        "information_to_extract": [
+          "Current challenges they're facing",
+          "Awareness of similar solutions",
+          "Role in decision-making process",
+          "Industry and company size"
+        ],
+        "response_strategy": [
+          "Focus on problem identification rather than solutions",
+          "Be curious rather than pushy",
+          "Ask open-ended questions about their challenges",
+          "Avoid technical details at this stage"
+        ],
+        "product_emphasis": [
+          "High-level benefits only",
+          "Industry relevance",
+          "Problem-solution fit at a general level"
+        ],
+        "objection_handling": {
+          "too_busy": "Suggest a brief 5-minute overview that addresses their key pain points",
+          "already_have_solution": "Ask about current pain points with existing solution",
+          "no_budget": "Focus on ROI and cost savings potential"
+        },
+        "next_steps": [
+          "Schedule a follow-up call",
+          "Share relevant case study",
+          "Move to interest stage if they show curiosity"
+        ]
+      }
+    },
+    {
+      "stage": "interest",
+      "content_structure": {
+        "headline": "Why {{product_name}} is right for you",
+        "body": "{{intro}} Here are a few ways {{product_name}} can help: {{benefits_list}}",
+        "testimonial": "\"{{testimonial_text}}\" - {{testimonial_source}}",
+        "cta_button": "See Features"
+      },
+      "variables": {
+        "testimonial_texts": [
+          "This solution transformed our workflow completely!",
+          "We saw a 30% increase in productivity within weeks.",
+          "The best investment we made this year."
+        ]
+      },
+      "completion_criteria": {
+        "feature_page_views": 75,
+        "time_on_page_seconds": 120
+      },
+      "follow_up_timing": {
+        "initial_delay_hours": 48,
+        "max_follow_ups": 3,
+        "follow_up_interval_hours": 72,
+        "session_timeout_minutes": 45,
+        "escalation_after_attempts": 3,
+        "time_in_stage_before_next_stage_days": 10,
+        "best_days": ["Monday", "Thursday"],
+        "message_spacing_minutes": 7,
+        "time_of_day_preferences": ["mid_morning", "late_afternoon"],
+        "follow_up_message_templates": {
+          "first_follow_up": "I wanted to follow up on the features of {{product_name}} we discussed earlier.",
+          "second_follow_up": "I noticed you were interested in {{product_name}}. Do you have any questions I can help with?",
+          "third_follow_up": "I thought you might find this case study relevant to your interest in {{product_name}}."
+        },
+        "engagement_based_timing": {
+          "feature_page_view_follow_up_hours": 24,
+          "high_time_on_page_follow_up_hours": 12
+        }
+      },
+      "session_open_after_initial_message": "200s",
+      "conversation_guidance": {
+        "information_to_extract": [
+          "Specific pain points and their impact",
+          "Current workflows and processes",
+          "Key requirements and must-have features",
+          "Decision timeline and process"
+        ],
+        "response_strategy": [
+          "Relate features directly to their specific challenges",
+          "Use social proof from similar customers",
+          "Begin introducing feature comparisons",
+          "Ask prioritization questions"
+        ],
+        "product_emphasis": [
+          "Core differentiating features",
+          "Specific use cases relevant to their industry",
+          "Integration capabilities",
+          "Implementation simplicity"
+        ],
+        "objection_handling": {
+          "complex_implementation": "Highlight guided onboarding process and support",
+          "feature_questions": "Provide specific technical information about requested features",
+          "competitors_offer": "Focus on unique differentiators without disparaging competitors"
+        },
+        "next_steps": [
+          "Schedule a personalized demo",
+          "Introduce to technical specialist if needed",
+          "Share detailed case studies from their industry",
+          "Move to consideration stage if discussing specific requirements"
+        ]
+      }
+    },
+    {
+      "stage": "consideration",
+      "content_structure": {
+        "headline": "Compare {{product_name}} Options",
+        "body": "{{intro}} We offer several options to meet your needs:",
+        "pricing_table": "{{pricing_items}}",
+        "cta_button": "Get Quote"
+      },
+      "variables": {
+        "pricing_plans": ["Basic", "Professional", "Enterprise"],
+        "pricing_features": {
+          "Basic": ["Core features", "Email support"],
+          "Professional": ["All Basic features", "Advanced analytics", "Priority support"],
+          "Enterprise": ["All Professional features", "Custom integrations", "Dedicated account manager"]
+        }
+      },
+      "completion_criteria": {
+        "pricing_page_views": 50,
+        "quote_requests": 20
+      },
+      "follow_up_timing": {
+        "initial_delay_hours": 36,
+        "max_follow_ups": 4,
+        "follow_up_interval_hours": 72,
+        "session_timeout_minutes": 60,
+        "escalation_after_attempts": 2,
+        "time_in_stage_before_next_stage_days": 14,
+        "best_days": ["Tuesday", "Wednesday", "Thursday"],
+        "message_spacing_minutes": 10,
+        "personalized_timing": {
+          "enterprise_prospects": {
+            "follow_up_interval_hours": 48,
+            "max_follow_ups": 6
+          }
+        },
+        "time_of_day_preferences": ["mid_morning", "mid_afternoon"],
+        "follow_up_message_templates": {
+          "first_follow_up": "I wanted to check if you had a chance to review the pricing options for {{product_name}}.",
+          "second_follow_up": "Based on your requirements, I think the {{recommended_plan}} plan might be the best fit. Would you like to discuss?",
+          "third_follow_up": "Do you have any questions about the pricing or features before we proceed?",
+          "fourth_follow_up": "I'd be happy to schedule a call to discuss {{product_name}} pricing in more detail."
+        },
+        "engagement_based_timing": {
+          "pricing_page_view_follow_up_hours": 24,
+          "quote_request_follow_up_hours": 4,
+          "demo_attendance_follow_up_hours": 12
+        }
+      },
+      "session_open_after_initial_message": "300s",
+      "conversation_guidance": {
+        "information_to_extract": [
+          "Budget constraints and expectations",
+          "Decision-makers involved in purchase process",
+          "Implementation timeline",
+          "Success metrics they'll use to evaluate the solution",
+          "Required customizations or special features"
+        ],
+        "response_strategy": [
+          "Present specific plan comparisons tailored to their needs",
+          "Emphasize ROI calculations",
+          "Be transparent about pricing and limitations",
+          "Suggest the optimal configuration based on their requirements"
+        ],
+        "product_emphasis": [
+          "Plan comparison with feature breakdown",
+          "Scalability options",
+          "Support and implementation details",
+          "Customization possibilities"
+        ],
+        "objection_handling": {
+          "price_concerns": "Focus on value, ROI, and compare total cost of ownership",
+          "missing_features": "Discuss roadmap or custom development options",
+          "internal_approval": "Offer materials to help them make the business case",
+          "competitor_pricing": "Emphasize value differentiation and hidden costs of alternatives"
+        },
+        "next_steps": [
+          "Send customized proposal document",
+          "Schedule call with decision makers",
+          "Offer free trial or proof of concept",
+          "Discuss contract details and terms",
+          "Move to decision stage if budget and requirements are aligned"
+        ]
+      }
+    },
+    {
+      "stage": "decision",
+      "content_structure": {
+        "headline": "Special Offer: {{product_name}}",
+        "body": "{{intro}} {{offer_details}} {{urgency}}",
+        "discount_code": "{{code}}",
+        "cta_button": "Buy Now"
+      },
+      "variables": {
+        "urgency_templates": ["Offer ends soon!", "Limited time only.", "Act now!"],
+        "discount_codes": ["SPECIAL20", "SAVE15NOW", "UPGRADE25"]
+      },
+      "completion_criteria": {
+        "purchases": 10,
+        "conversion_rate": 0.05
+      },
+      "follow_up_timing": {
+        "initial_delay_hours": 24,
+        "max_follow_ups": 5,
+        "follow_up_interval_hours": 48,
+        "session_timeout_minutes": 90,
+        "escalation_after_attempts": 3,
+        "time_in_stage_before_next_stage_days": 5,
+        "best_days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        "message_spacing_minutes": 15,
+        "urgency_escalation": {
+          "final_offer_delay_days": 2,
+          "discount_expiration_days": 5,
+          "reminder_schedule_hours": [24, 48, 72],
+          "final_day_reminder_times": ["9:00", "13:00", "16:00"]
+        },
+        "time_of_day_preferences": ["morning", "late_afternoon"],
+        "follow_up_message_templates": {
+          "first_follow_up": "Just a reminder that your special offer for {{product_name}} is available.",
+          "second_follow_up": "Your discount code {{code}} is valid for {{remaining_days}} more days.",
+          "third_follow_up": "The special pricing for {{product_name}} ends soon. Would you like to proceed?",
+          "fourth_follow_up": "This is your last chance to take advantage of our special offer on {{product_name}}.",
+          "fifth_follow_up": "Today is the final day to use your discount code {{code}} for {{product_name}}."
+        },
+        "engagement_based_timing": {
+          "offer_view_follow_up_hours": 4,
+          "cart_abandonment_follow_up_hours": 2,
+          "partial_signup_follow_up_hours": 1
+        }
+      },
+      "session_open_after_initial_message": "400s",
+      "conversation_guidance": {
+        "information_to_extract": [
+          "Final concerns or hesitations",
+          "Contract preferences (length, payment terms)",
+          "Implementation timing needs",
+          "Key stakeholders for onboarding process"
+        ],
+        "response_strategy": [
+          "Create urgency without being pushy",
+          "Summarize all value points discussed previously",
+          "Clearly outline next steps after purchase",
+          "Offer reassurance about implementation and support"
+        ],
+        "product_emphasis": [
+          "Guarantees and support commitments",
+          "Onboarding process details",
+          "Success stories from similar customers",
+          "Special terms or conditions available"
+        ],
+        "objection_handling": {
+          "need_more_time": "Explain time-limited incentives and offer to hold them",
+          "final_price_negotiation": "Define what concessions are possible and their limitations",
+          "want_different_terms": "Explain what flexibility exists in contracts",
+          "need_more_approvals": "Offer to speak with other stakeholders or provide supporting materials"
+        },
+        "next_steps": [
+          "Send final contract for signature",
+          "Schedule kickoff and onboarding meeting",
+          "Introduce to implementation team",
+          "Define success metrics for post-implementation review",
+          "Begin transition to customer success team"
+        ]
+      }
+    }
+  ]
+} 

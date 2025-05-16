@@ -1,18 +1,37 @@
-# Dockerfile for the communication-base microservice
+# Dockerfile for the communication-base microservice (worker-only mode)
 
-FROM python:3.11-slim
+FROM python:3.9-slim
 
+# Set working directory
 WORKDIR /app
 
-# Copy source code
-COPY src/ ./src
-COPY requirements.txt ./
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONPATH=/app
 
-RUN pip install --no-cache-dir -r requirements.txt
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy tests
-COPY tests/ ./tests
+# Copy requirements file
+COPY requirements.txt .
 
-RUN python -m unittest discover -s tests
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-ENTRYPOINT ["python", "src/communication_main.py"] 
+# Copy application code
+COPY . .
+
+# Create non-root user for security
+RUN adduser --disabled-password --gecos "" appuser
+USER appuser
+
+# Expose port
+EXPOSE 8000
+
+# Run the application
+CMD ["python", "-m", "src.api.main"] 

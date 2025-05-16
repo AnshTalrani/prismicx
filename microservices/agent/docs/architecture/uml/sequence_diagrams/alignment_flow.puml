@@ -1,0 +1,138 @@
+@startuml Template Purpose Alignment Flow
+
+title Template-Purpose Alignment Process
+
+actor "Administrator" as Admin
+participant "API" as API
+participant "ApplicationService" as AppService
+participant "TemplateService" as TemplateService
+participant "NotificationService" as NotifService
+participant "Template Repository" as TemplateRepo
+participant "Purpose Repository" as PurposeRepo
+
+== Automated Periodic Alignment Check ==
+
+AppService -> AppService: Schedule periodic checks
+activate AppService
+AppService -> TemplateService: check_purpose_template_alignment()
+activate TemplateService
+
+TemplateService -> TemplateRepo: list_templates()
+activate TemplateRepo
+TemplateRepo --> TemplateService: templates
+deactivate TemplateRepo
+
+TemplateService -> PurposeRepo: list_purposes()
+activate PurposeRepo
+PurposeRepo --> TemplateService: purposes
+deactivate PurposeRepo
+
+TemplateService -> TemplateService: Find templates without purposes
+TemplateService -> TemplateService: Find purposes without templates
+TemplateService -> TemplateService: Find purposes with missing templates
+TemplateService --> AppService: alignment_results
+deactivate TemplateService
+
+AppService -> NotifService: send_alignment_notification(alignment_results)
+activate NotifService
+NotifService -> NotifService: Format notification message
+NotifService -> NotifService: Determine notification priority
+NotifService -> NotifService: Log notification
+NotifService --> AppService: notification_sent
+deactivate NotifService
+deactivate AppService
+
+== On-Demand Alignment Check ==
+
+Admin -> API: POST /api/alignment/check
+activate API
+API -> AppService: check_and_notify_alignment()
+activate AppService
+
+AppService -> TemplateService: check_purpose_template_alignment()
+activate TemplateService
+
+TemplateService -> TemplateRepo: list_templates()
+activate TemplateRepo
+TemplateRepo --> TemplateService: templates
+deactivate TemplateRepo
+
+TemplateService -> PurposeRepo: list_purposes()
+activate PurposeRepo
+PurposeRepo --> TemplateService: purposes
+deactivate PurposeRepo
+
+TemplateService -> TemplateService: Find templates without purposes
+TemplateService -> TemplateService: Find purposes without templates
+TemplateService -> TemplateService: Find purposes with missing templates
+TemplateService --> AppService: alignment_results
+deactivate TemplateService
+
+AppService -> NotifService: send_alignment_notification(alignment_results)
+activate NotifService
+NotifService -> NotifService: Format notification message
+NotifService -> NotifService: Determine notification priority
+NotifService -> NotifService: Log notification
+NotifService --> AppService: notification_sent
+deactivate NotifService
+
+AppService --> API: alignment_results
+deactivate AppService
+API --> Admin: alignment status JSON
+deactivate API
+
+== Alignment Status Check ==
+
+Admin -> API: GET /api/alignment/status
+activate API
+API -> AppService: check_and_notify_alignment()
+activate AppService
+
+AppService -> TemplateService: check_purpose_template_alignment()
+activate TemplateService
+
+TemplateService -> TemplateRepo: list_templates()
+activate TemplateRepo
+TemplateRepo --> TemplateService: templates
+deactivate TemplateRepo
+
+TemplateService -> PurposeRepo: list_purposes()
+activate PurposeRepo
+PurposeRepo --> TemplateService: purposes
+deactivate PurposeRepo
+
+TemplateService -> TemplateService: Find misalignments
+TemplateService --> AppService: alignment_results
+deactivate TemplateService
+
+AppService -> API: alignment_results + status info
+deactivate AppService
+API --> Admin: alignment status with metadata
+deactivate API
+
+== Template Creation ==
+
+Admin -> API: Create template
+activate API
+API -> TemplateService: add_template(template_data)
+activate TemplateService
+TemplateService -> TemplateRepo: save(template)
+activate TemplateRepo
+TemplateRepo --> TemplateService: success
+deactivate TemplateRepo
+
+TemplateService -> TemplateService: Schedule alignment check
+TemplateService -> TemplateService: check_purpose_template_alignment()
+TemplateService -> TemplateService: Find misalignments
+TemplateService -> NotifService: send_alignment_notification(results)
+activate NotifService
+NotifService -> NotifService: Send notification if needed
+NotifService --> TemplateService: notification_sent
+deactivate NotifService
+
+TemplateService --> API: template_created
+deactivate TemplateService
+API --> Admin: template creation confirmation
+deactivate API
+
+@enduml 

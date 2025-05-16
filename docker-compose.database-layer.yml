@@ -1,0 +1,232 @@
+version: '3.9'
+
+services:
+  # Tenant Management Service - Handles multi-tenant database routing and provisioning
+  tenant-mgmt-service:
+    build:
+      context: ./database-layer/tenant-mgmt-service
+      dockerfile: Dockerfile
+    container_name: tenant-mgmt-service
+    restart: unless-stopped
+    ports:
+      - "8501:8501"
+    environment:
+      - TENANT_MONGODB_URI=mongodb://admin:password@mongodb:27017
+      - TENANT_REGISTRY_DB=tenant_registry
+      - TENANT_SERVICE_HOST=0.0.0.0
+      - TENANT_SERVICE_PORT=8501
+      - TENANT_SERVICE_LOG_LEVEL=INFO
+    networks:
+      - system-db-net
+      - tenant-db-net
+    depends_on:
+      - mongodb-system
+
+  # User Data Service - Provides centralized access to system-wide user data
+  user-data-service:
+    build:
+      context: ./database-layer/user-data-service
+      dockerfile: Dockerfile
+    container_name: user-data-service
+    restart: unless-stopped
+    ports:
+      - "8502:8502"
+    environment:
+      - USER_DB_HOST=postgres-system
+      - USER_DB_PORT=5432
+      - USER_DB_USER=user_service
+      - USER_DB_PASSWORD=password
+      - USER_DB_NAME=system_users
+      - USER_SERVICE_HOST=0.0.0.0
+      - USER_SERVICE_PORT=8502
+      - USER_SERVICE_LOG_LEVEL=INFO
+    networks:
+      - system-db-net
+    depends_on:
+      - postgres-system
+
+  # Task Repository Service - Provides centralized task management
+  task-repo-service:
+    build:
+      context: ./database-layer/task-repo-service
+      dockerfile: Dockerfile
+    container_name: task-repo-service
+    restart: unless-stopped
+    ports:
+      - "8503:8503"
+    environment:
+      - MONGODB_URI=mongodb://task_service:password@mongodb-system:27017/task_repository
+      - MONGODB_DATABASE=task_repository
+      - MONGODB_TASKS_COLLECTION=tasks
+      - API_KEY=dev_api_key
+      - HOST=0.0.0.0
+      - PORT=8503
+      - SERVICE_NAME=task-repo-service
+    networks:
+      - system-db-net
+    depends_on:
+      - mongodb-system
+
+  # Category Repository Service - Provides centralized category management
+  category-repository-service:
+    build:
+      context: ./database-layer/category-repository-service
+      dockerfile: Dockerfile
+    container_name: category-repository-service
+    restart: unless-stopped
+    ports:
+      - "8504:8080"
+    environment:
+      - MONGODB_URI=mongodb://category_service:password@mongodb-system:27017/category_repository
+      - MONGODB_DATABASE=category_repository
+      - MONGODB_CATEGORIES_COLLECTION=categories
+      - MONGODB_FACTORS_COLLECTION=factors
+      - MONGODB_CAMPAIGNS_COLLECTION=campaigns
+      - MONGODB_BATCH_AS_OBJECTS_COLLECTION=batch_as_objects
+      - MONGODB_ENTITY_ASSIGNMENTS_COLLECTION=entity_assignments
+      - API_KEY=dev_api_key
+      - HOST=0.0.0.0
+      - PORT=8080
+      - SERVICE_NAME=category-repository-service
+      - MAX_PAGE_SIZE=100
+    networks:
+      - system-db-net
+      - microservices-net
+    depends_on:
+      - mongodb-system
+
+  # Management System Repository Service - Provides centralized management systems data
+  management-system-repo:
+    build:
+      context: ./database-layer/management-system-repo
+      dockerfile: Dockerfile
+    container_name: management-system-repo
+    restart: unless-stopped
+    ports:
+      - "8505:8080"
+    environment:
+      # PostgreSQL settings for system repo
+      - SYSTEM_DB_HOST=postgres-system
+      - SYSTEM_DB_PORT=5432
+      - SYSTEM_DB_USER=postgres
+      - SYSTEM_DB_PASSWORD=password
+      - SYSTEM_DB_NAME=management_system_repository
+      # MongoDB settings for config_db
+      - CONFIG_DB_HOST=mongodb-system
+      - CONFIG_DB_PORT=27017
+      - CONFIG_DB_USER=admin
+      - CONFIG_DB_PASSWORD=password
+      - CONFIG_DB_NAME=config_db
+      # API settings
+      - API_KEY=dev_api_key
+      - HOST=0.0.0.0
+      - PORT=8080
+      - SERVICE_NAME=management-system-repo
+    networks:
+      - system-db-net
+      - microservices-net
+    depends_on:
+      - postgres-system
+      - mongodb-system
+
+  # System-wide MongoDB for tenant registry and shared data
+  mongodb-system:
+    image: mongo:5.0
+    container_name: mongodb-system
+    restart: unless-stopped
+    ports:
+      - "27018:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    volumes:
+      - mongodb_system_data:/data/db
+      - ./database-layer/init-scripts/mongo:/docker-entrypoint-initdb.d
+    networks:
+      - system-db-net
+
+  # System-wide PostgreSQL for structured data
+  postgres-system:
+    image: postgres:14
+    container_name: postgres-system
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=system
+    volumes:
+      - postgres_system_data:/var/lib/postgresql/data
+      - ./database-layer/init-scripts/postgres:/docker-entrypoint-initdb.d
+    networks:
+      - system-db-net
+
+  # Connection pooling for PostgreSQL
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    container_name: pgbouncer
+    restart: unless-stopped
+    ports:
+      - "6432:6432"
+    environment:
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - DB_HOST=postgres-system
+      - DB_NAME=system
+      - POOL_MODE=transaction
+      - MAX_CLIENT_CONN=1000
+      - DEFAULT_POOL_SIZE=20
+    networks:
+      - system-db-net
+    depends_on:
+      - postgres-system
+
+  # Multi-tenant MongoDB for service-specific tenant data
+  mongodb-tenant:
+    image: mongo:5.0
+    container_name: mongodb-tenant
+    restart: unless-stopped
+    command: ["--replSet", "rs0", "--bind_ip_all"]
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    volumes:
+      - mongodb_tenant_data:/data/db
+      - ./database-layer/init-scripts/tenant-mongo:/docker-entrypoint-initdb.d
+    networks:
+      - tenant-db-net
+
+  # Redis for caching and messaging
+  redis-cache:
+    image: redis:6.2-alpine
+    container_name: redis-cache
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --requirepass password
+    volumes:
+      - redis_cache_data:/data
+    networks:
+      - system-db-net
+      - tenant-db-net
+
+networks:
+  system-db-net:
+    driver: bridge
+  tenant-db-net:
+    driver: bridge
+  microservices-net:
+    external: true
+
+volumes:
+  mongodb_system_data:
+    driver: local
+  postgres_system_data:
+    driver: local
+  mongodb_tenant_data:
+    driver: local
+  redis_cache_data:
+    driver: local 

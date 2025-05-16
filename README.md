@@ -1,137 +1,189 @@
-# Project README
+# Prismicx Microservices
 
-Welcome to this multi-service Python project! This repository includes a monolith application as well as microservices, each designed to perform different tasks within the overall system architecture. Below is a concise guide to help you get started with building, running, and contributing to the project.
-
----
-
-## Table of Contents
-1. [Overview](#overview)  
-2. [Architecture](#architecture)  
-3. [Prerequisites](#prerequisites)  
-4. [Installation](#installation)  
-5. [Usage](#usage)  
-6. [Project Structure](#project-structure)  
-7. [Contributing](#contributing)  
-8. [License](#license)
-
----
-
-## Overview
-This project consists of:
-- A set of microservices (e.g. the “analysis-base” service) built using Python (FastAPI, Uvicorn, etc.).  
-- A “monolith” application demonstrating a more traditional single-application approach.  
-- Shared libraries and requirements, making it easy to maintain consistent dependencies across services.
-
-### New Microservices
-- **communication-base**: Handles communication tasks and integrates with external APIs.
-- **agent**: Manages agent-related functionalities and processes.
-- **chatbot**: Provides chatbot capabilities for user interaction.
-- **customer-support-bot**: Offers customer support functionalities.
-- **expert-bots**: Hosts expert systems and AI-driven bots.
-- **mlops-pipeline**: Manages MLOps workflows and pipelines.
-- **management_systems**: Oversees management and administrative tasks.
-- **generative-base**: Focuses on generative AI models and tasks.
-- **marketing-base**: Supports marketing operations and analytics.
-
-Each microservice is containerized using Docker and can be built and run independently.
-
-The main goal is to showcase a modular, scalable approach using Docker and Docker Compose.
-
----
+This repository contains the microservices architecture for the Prismicx platform. The platform consists of several microservices working together to provide analysis, generative, marketing, and communication capabilities.
 
 ## Architecture
-1. **Monolith**  
-   - A single Python application (in “monolith/”) for users who prefer a simpler setup.
-2. **Microservices**  
-   - “analysis-base/” runs Uvicorn on port 8100 (by default) to handle data analysis tasks.  
-3. **Docker Compose**  
-   - A “docker-compose.yml” file orchestrates multiple containers for development or production.
 
-Additionally, see the “Architectural_document.txt” file for more technical details about how the services communicate.
+The platform follows the MACH (Microservices, API-first, Cloud-native, Headless) architecture pattern:
 
----
+- **Microservices**: Each service is independently deployable with its own database
+- **API-first**: All services expose well-defined REST APIs
+- **Cloud-native**: Designed to run in containerized environments
+- **Headless**: Backend and frontend are decoupled
 
-## Prerequisites
-- Docker & Docker Compose installed  
-- Python 3.10+ (if you prefer to run the applications locally instead of using Docker)
+### Microservices
 
----
+The platform consists of the following microservices:
 
-## Installation
+- **Analysis Base**: Provides analytical capabilities for data processing
+- **Generative Base**: Provides generative AI capabilities
+- **Communication Base**: Manages conversational interactions and operational communications
+- **Marketing Base**: Specialized for marketing campaigns, segmentation, and analytics
 
-### Docker-Based Installation
-1. Clone this repository.  
-2. From the root of the repository, run:
+## Service Responsibilities
+
+### Communication Base
+- Conversational interactions with users
+- Session management for maintaining conversation context
+- Conversation stage tracking and analysis
+- LLM integration for generating responses
+- Operational communications (order confirmations, status updates, etc.)
+
+### Marketing Base
+- Marketing campaign management
+- Customer segmentation
+- A/B testing capabilities
+- Marketing analytics and reporting
+- Campaign performance tracking
+
+## Getting Started
+
+### Prerequisites
+
+- Docker and Docker Compose
+- Python 3.10+ (for local development)
+- MongoDB
+- Redis
+
+### Installation
+
+1. Clone the repository:
+
 ```bash
-docker-compose build
-docker-compose up
+git clone https://github.com/your-org/prismicx.git
+cd prismicx
 ```
-This will build and start the containers (including the “analysis-base” service and any other defined services) in detached mode.
 
-### Local Python Installation
-If you prefer, you can run the microservices locally:
-1. Clone this repository.  
-2. Navigate to the microservice folder:
-   ```bash
-   cd microservices/analysis-base
-   ```
-3. Install dependencies:
-   ```bash
-   pip install --no-cache-dir -r requirements.txt
-   ```
-4. Start the service:
-   ```bash
-   uvicorn src.analysis_main:app --host 0.0.0.0 --port 8100
-   ```
-5. (Optional) Spin up other services or the monolith as needed.
+2. Start the microservices using Docker Compose:
 
----
-
-## Usage
-- By default, the “analysis-base” microservice listens on port 8100.  
-- You can send requests to the endpoint (e.g., `http://localhost:8100/`) depending on your API design in `analysis_main.py`.
-- The monolith can be run similarly, either via Docker or Python scripts, depending on your workflow.
-
----
-
-## Project Structure
-Below is a simplified overview of the repository:
+```bash
+docker-compose up -d
 ```
-.
-├─ monolith/
-│  ├─ main.py
-│  └─ ...
-├─ microservices/
-│  ├─ analysis-base/
-│  │  ├─ Dockerfile
-│  │  ├─ requirements.txt
-│  │  └─ src/
-│  │     └─ analysis_main.py
-│  └─ ...
-├─ docker-compose.yml
-├─ requirements.txt
-├─ .gitignore
-├─ Architectural_document.txt
-└─ ...
+
+This will start all services including MongoDB and Redis.
+
+### Service Endpoints
+
+- **Analysis Base**: http://localhost:8100
+  - Health check: http://localhost:8100/health
+  - Metrics: http://localhost:8100/metrics
+  - API docs: http://localhost:8100/docs
+
+- **Generative Base**: http://localhost:8000
+  - Health check: http://localhost:8000/health
+  - Metrics: http://localhost:8000/metrics
+  - API docs: http://localhost:8000/docs
+
+## Development
+
+### Local Development Setup
+
+1. Create a virtual environment:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 ```
-- **analysis-base/src/** contains your FastAPI application code for analysis tasks.  
-- **monolith/main.py** has the simpler, single-process approach.  
-- **docker-compose.yml** orchestrates multi-container setups.
 
----
+2. Install dependencies:
 
-## Contributing
-1. Fork the repository, then clone your fork for local development.  
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`).  
-3. Commit your changes (`git commit -m 'Add fantastic feature'`).  
-4. Push to the branch (`git push origin feature/AmazingFeature`).  
-5. Create a new Pull Request.
+```bash
+# For Analysis Base
+cd microservices/analysis-base
+pip install -r requirements.txt
 
----
+# For Generative Base
+cd microservices/generative-base
+pip install -r requirements.txt
+```
+
+3. Create a `.env` file in each microservice directory with appropriate configuration.
+
+4. Run the services:
+
+```bash
+# Analysis Base
+cd microservices/analysis-base
+python analysis_main.py
+
+# Generative Base
+cd microservices/generative-base
+python src/main.py
+```
+
+### Project Structure
+
+```
+prismicx/
+├── microservices/
+│   ├── analysis-base/
+│   │   ├── src/
+│   │   │   ├── api/
+│   │   │   ├── common/
+│   │   │   ├── config/
+│   │   │   ├── processing/
+│   │   │   │   ├── components/
+│   │   │   ├── repository/
+│   │   │   └── service/
+│   │   ├── Dockerfile
+│   │   └── requirements.txt
+│   │
+│   ├── generative-base/
+│   │   ├── src/
+│   │   │   ├── api/
+│   │   │   ├── common/
+│   │   │   ├── processing/
+│   │   │   │   ├── components/
+│   │   │   ├── repository/
+│   │   │   └── service/
+│   │   ├── Dockerfile
+│   │   └── requirements.txt
+│   │
+│   └── docker-compose.yml
+│
+└── README.md
+```
+
+## API Usage
+
+### Analysis Base
+
+Request to process an analysis template:
+
+```bash
+curl -X POST http://localhost:8100/api/v1/templates/process \
+  -H "Content-Type: application/json" \
+  -d '{
+    "template": {
+      "type": "descriptive",
+      "config": {
+        "fields": ["revenue", "users", "engagement"]
+      }
+    },
+    "input_data": {
+      "dataset": "monthly_metrics"
+    }
+  }'
+```
+
+### Generative Base
+
+Request to process a generative template:
+
+```bash
+curl -X POST http://localhost:8000/api/v1/templates/process \
+  -H "Content-Type: application/json" \
+  -d '{
+    "template": {
+      "type": "text_generation",
+      "config": {
+        "prompt": "Write a product description for a premium coffee maker",
+        "max_tokens": 250
+      }
+    }
+  }'
+```
 
 ## License
-This project is licensed under an open-source license (e.g., MIT or Apache 2.0). See the [LICENSE](LICENSE) file for details.
 
----
-
-**Thank you for using this project!** If you have any questions or suggestions, feel free to open an issue or pull request. Happy coding! 
+[MIT License](LICENSE) 

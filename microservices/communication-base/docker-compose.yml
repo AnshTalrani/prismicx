@@ -1,0 +1,64 @@
+version: '3.9'
+
+services:
+  communication-base:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: communication-base
+    restart: unless-stopped
+    ports:
+      - "8090:8000"
+    volumes:
+      - ./src:/app/src
+      - ./data:/app/data
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/communication
+      - MONGODB_USERNAME=admin
+      - MONGODB_PASSWORD=password
+      - LOG_LEVEL=INFO
+      - CAMPAIGN_POLL_INTERVAL_SECONDS=30
+      # Agent microservice connection
+      - AGENT_API_URL=http://agent:8000
+      - AGENT_API_KEY=${AGENT_API_KEY:-dev_agent_key}
+      - AGENT_API_TIMEOUT=30
+    networks:
+      - mongo-net
+    depends_on:
+      - mongodb
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - mongo-net
+
+  mongodb-express:
+    image: mongo-express
+    ports:
+      - "8081:8081"
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongodb
+    depends_on:
+      - mongodb
+    networks:
+      - communication-network
+
+volumes:
+  mongo_data:
+    driver: local
+
+networks:
+  mongo-net:
+    driver: bridge
+    name: mongo-net
+  communication-network:
+    driver: bridge 

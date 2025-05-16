@@ -1,0 +1,208 @@
+@startuml Batch Result Distribution Flow
+
+' Style settings
+skinparam backgroundColor white
+skinparam handwritten false
+skinparam monochrome false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam sequence {
+    ArrowColor #2C3E50
+    LifeLineBackgroundColor #ECF0F1
+    LifeLineBorderColor #7F8C8D
+    ParticipantBackgroundColor #3498DB
+    ParticipantBorderColor #2980B9
+}
+
+' Define participants
+participant "BatchProcessor" as Processor
+participant "DefaultContextService" as ContextService
+participant "CategoryRepository" as CatRepo
+database "Storage" as Storage
+actor "User" as User
+participant "API Gateway" as API
+participant "RequestController" as Controller
+
+' Define sequence
+title Batch Result Distribution Flow
+
+' Batch completion
+note over Processor: Batch job completed successfully
+
+' Start distribution process
+Processor -> Processor: _distribute_results(batch_id, job_config, results)
+
+' Get distribution configuration
+Processor -> Processor: Extract distribution configuration
+
+' If job has distribution enabled
+alt distribute_results is true
+    
+    ' Get users for distribution
+    Processor -> Processor: Get users from job_config.distribution.users
+    
+    ' Loop through each user
+    loop for each user_id in distribution.users
+        ' Create reference for user
+        Processor -> Processor: Create batch reference object
+        note right
+          Reference contains:
+          - batch_id
+          - job_name
+          - created_at timestamp
+          - purpose_id
+          - reference_type
+        end note
+        
+        ' Set batch reference in user context
+        Processor -> ContextService: set_batch_reference(user_id, purpose_id, reference)
+        activate ContextService
+        
+        ' Update user context
+        ContextService -> ContextService: Retrieve or create user context
+        ContextService -> ContextService: Update with batch reference
+        
+        ' Persist updated context
+        ContextService -> Storage: _persist_context(user_id, context)
+        ContextService <-- Storage: Context saved
+        
+        ' Log distribution
+        Processor <-- ContextService: Success
+        deactivate ContextService
+        
+        Processor -> Processor: Log distribution to user
+    end
+    
+    ' Handle special distribution cases
+    alt distribution.reference_type == "matrix"
+        ' Store batch reference in matrix format for cross-referencing
+        Processor -> ContextService: set_batch_reference_matrix(category_id, reference)
+        activate ContextService
+        ContextService -> Storage: Store matrix reference
+        ContextService <-- Storage: Reference stored
+        Processor <-- ContextService: Success
+        deactivate ContextService
+    end
+end
+
+' Update batch status to reflect distribution
+Processor -> ContextService: update_batch_status(batch_id, "completed_with_distribution")
+activate ContextService
+ContextService -> Storage: Update batch status
+ContextService <-- Storage: Status updated
+Processor <-- ContextService: Updated context
+deactivate ContextService
+
+' User accesses batch results
+User -> API: Request batch results (GET /api/v1/batch/{batch_id})
+activate API
+
+API -> Controller: getBatchById(batch_id)
+activate Controller
+
+Controller -> Processor: get_batch_status(batch_id)
+activate Processor
+Processor -> ContextService: get_batch_context(batch_id)
+activate ContextService
+ContextService -> Storage: _load_context(batch_id)
+ContextService <-- Storage: Batch context
+Processor <-- ContextService: Batch context with results
+deactivate ContextService
+Controller <-- Processor: Batch status and results
+deactivate Processor
+
+API <-- Controller: Batch response
+deactivate Controller
+
+User <-- API: Batch results
+deactivate API
+
+' User accesses results via reference
+User -> API: Request personal batch references (GET /api/v1/user/references)
+activate API
+
+API -> Controller: getUserBatchReferences(user_id)
+activate Controller
+
+Controller -> ContextService: get_batch_references(user_id)
+activate ContextService
+ContextService -> Storage: _load_context(user_id)
+ContextService <-- Storage: User context with references
+Controller <-- ContextService: Batch references
+deactivate ContextService
+
+API <-- Controller: References response
+deactivate Controller
+
+User <-- API: List of batch references
+deactivate API
+
+' User accesses specific referenced batch
+User -> API: Request referenced batch (GET /api/v1/batch/{reference.batch_id})
+activate API
+
+API -> Controller: getBatchById(reference.batch_id)
+activate Controller
+
+Controller -> ContextService: get_batch_context(reference.batch_id)
+activate ContextService
+ContextService -> Storage: _load_context(reference.batch_id)
+ContextService <-- Storage: Batch context
+Controller <-- ContextService: Batch context with results
+deactivate ContextService
+
+API <-- Controller: Batch response
+deactivate Controller
+
+User <-- API: Batch results
+deactivate API
+
+' User accesses filtered results for a purpose
+User -> API: Request purpose-specific references\n(GET /api/v1/user/references?purpose_id=xyz)
+activate API
+
+API -> Controller: getUserBatchReferences(user_id, purpose_id)
+activate Controller
+
+Controller -> ContextService: get_batch_references(user_id, purpose_id)
+activate ContextService
+ContextService -> Storage: _load_context(user_id)
+ContextService <-- Storage: User context
+ContextService -> ContextService: Filter references by purpose_id
+Controller <-- ContextService: Filtered batch references
+deactivate ContextService
+
+API <-- Controller: Filtered references response
+deactivate Controller
+
+User <-- API: Purpose-specific batch references
+deactivate API
+
+note right of ContextService
+  Batch Reference Structure:
+  {
+    "batch_id": "unique_id",
+    "job_name": "Job Name",
+    "created_at": "timestamp",
+    "purpose_id": "purpose_id",
+    "reference_type": "user|matrix|distribute"
+  }
+end note
+
+note right of User
+  Access Patterns:
+  1. Direct access to batch results
+  2. Access via user's batch references
+  3. Filtered access by purpose
+  4. Matrix-based access for complex relationships
+end note
+
+note right of Controller
+  RequestController Features:
+  - Handles both individual and batch requests 
+  - Provides batch result retrieval endpoints
+  - Manages user access to batch references
+  - Supports purpose-based filtering of results
+end note
+
+@enduml 

@@ -1,0 +1,138 @@
+version: '3.8'
+
+services:
+  # Database services
+  mongodb:
+    image: mongo:5.0
+    container_name: prismicx-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    networks:
+      - prismicx-network
+
+  redis:
+    image: redis:6.2-alpine
+    container_name: prismicx-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - prismicx-network
+    command: redis-server --requirepass password
+
+  # Communication-base service - Handles conversational interactions
+  communication-base:
+    build:
+      context: ./communication-base
+      dockerfile: Dockerfile
+    container_name: communication-base
+    restart: unless-stopped
+    depends_on:
+      - mongodb
+      - redis
+    ports:
+      - "8010:8010"
+    volumes:
+      - ./communication-base:/app
+    environment:
+      - COMMUNICATION_MONGODB_URI=mongodb://admin:password@mongodb:27017
+      - COMMUNICATION_MONGODB_DATABASE=communication_db
+      - COMMUNICATION_REDIS_URI=redis://:password@redis:6379/0
+      - COMMUNICATION_HOST=0.0.0.0
+      - COMMUNICATION_PORT=8010
+      - COMMUNICATION_DEBUG=false
+    networks:
+      - prismicx-network
+  
+  # Marketing-base service - Handles marketing campaigns and analytics
+  marketing-base:
+    build:
+      context: ./marketing-base
+      dockerfile: Dockerfile
+    container_name: marketing-base
+    restart: unless-stopped
+    depends_on:
+      - mongodb
+      - redis
+    ports:
+      - "8020:8020"
+    volumes:
+      - ./marketing-base:/app
+    environment:
+      - MARKETING_MONGODB_URI=mongodb://admin:password@mongodb:27017
+      - MARKETING_MONGODB_DATABASE=marketing_db
+      - MARKETING_REDIS_URI=redis://:password@redis:6379/0
+      - MARKETING_HOST=0.0.0.0
+      - MARKETING_PORT=8020
+      - MARKETING_DEBUG=false
+    networks:
+      - prismicx-network
+    command: python -m examples.field_mapper_example
+
+  # Analysis-base service
+  analysis-base:
+    build:
+      context: ./analysis-base
+      dockerfile: Dockerfile
+    container_name: analysis-base
+    restart: unless-stopped
+    depends_on:
+      - mongodb
+      - redis
+    ports:
+      - "8100:8100"
+    environment:
+      - ANALYSIS_SERVICE_TYPE=analysis
+      - ANALYSIS_WORKER_ID=analysis-worker-1
+      - ANALYSIS_MONGODB_URL=mongodb://admin:password@mongodb:27017
+      - ANALYSIS_DATABASE_NAME=analysis
+      - ANALYSIS_REDIS_URL=redis://:password@redis:6379/0
+      - ANALYSIS_LOG_LEVEL=INFO
+      - ANALYSIS_BATCH_PROCESSING_ENABLED=true
+      - ANALYSIS_BATCH_SIZE=10
+    networks:
+      - prismicx-network
+    volumes:
+      - ./analysis-base:/app
+
+  # Generative-base service
+  generative-base:
+    build:
+      context: ./generative-base
+      dockerfile: Dockerfile
+    container_name: generative-base
+    restart: unless-stopped
+    depends_on:
+      - mongodb
+      - redis
+    ports:
+      - "8000:8000"
+    environment:
+      - GENERATIVE_SERVICE_TYPE=generative
+      - GENERATIVE_WORKER_ID=generative-worker-1
+      - GENERATIVE_MONGODB_URL=mongodb://admin:password@mongodb:27017
+      - GENERATIVE_DATABASE_NAME=generative
+      - GENERATIVE_REDIS_URL=redis://:password@redis:6379/0
+      - GENERATIVE_LOG_LEVEL=INFO
+      - GENERATIVE_BATCH_PROCESSING_ENABLED=true
+      - GENERATIVE_BATCH_SIZE=10
+    networks:
+      - prismicx-network
+    volumes:
+      - ./generative-base:/app
+
+networks:
+  prismicx-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+    driver: local
+  redis_data:
+    driver: local 
