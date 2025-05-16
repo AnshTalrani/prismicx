@@ -1,0 +1,221 @@
+@startuml Agent Microservice Architecture
+
+' Define components
+!define API #PaleGreen
+!define APP #LightBlue
+!define DOMAIN #LightPink
+!define INFRA #LightYellow
+!define EXTERNAL #Gray
+!define SCHEDULER #LightSalmon
+!define CONFIG #LightCyan
+
+package "API Layer" as api API {
+    [RequestController] as reqController
+    [TemplateController] as tempController
+    [PurposeController] as purposeController
+    [CategoryController] as categoryController
+    [JobController] as jobController
+}
+
+package "Application Layer" as app APP {
+    [RequestService] as requestService
+    [TemplateService] as templateService
+    [BatchProcessor] as batchProcessor
+    [PurposeService] as purposeService
+    
+    interface "IOrchestrationService" as IOrcheService
+    interface "IRequestService" as IReqService
+    interface "ITemplateService" as ITempService
+    interface "INLPService" as INlpService
+    interface "IContextService" as IContextService
+    interface "ICommunicationService" as ICommService
+    interface "ICategoryRepository" as ICatRepo
+}
+
+package "Domain Layer" as domain DOMAIN {
+    [ExecutionTemplate] as execTemplate
+    [Request] as request
+    [User] as user
+    [ServiceType] as serviceType
+    [Purpose] as purpose
+    [BatchType] as batchType
+    [JobConfiguration] as jobConfig
+    
+    interface "ITemplateRepository" as ITempRepo
+    interface "IRequestRepository" as IReqRepo
+    interface "IPurposeRepository" as IPurposeRepo
+}
+
+package "Infrastructure Layer" as infra INFRA {
+    [DefaultOrchestrationService] as orchService
+    [DefaultNLPService] as nlpService
+    [DefaultContextService] as contextService
+    [LoggingCommunicationService] as loggingCommService
+    [FileTemplateRepository] as fileTemplateRepo
+    [InMemoryRequestRepository] as inMemoryReqRepo
+    [FilePurposeRepository] as filePurposeRepo
+    [CategoryRepositoryClient] as catRepoClient
+    [GenerativeClient] as genClient
+    [AnalysisClient] as analysisClient
+    [CommunicationClient] as commClient
+    
+    database "File Storage" as fileStorage
+    database "Memory Storage" as memStorage
+}
+
+package "Scheduler" as scheduler SCHEDULER {
+    [BatchScheduler] as batchScheduler
+    [CronJobManager] as cronJobManager
+    [JobStatusTracker] as jobStatusTracker
+}
+
+package "Configuration" as config CONFIG {
+    [BatchConfigLoader] as batchConfigLoader
+    [ConfigManager] as configManager
+    database "Batch Configuration" as batchConfig {
+        [batch_config.json] as batchConfigJson
+    }
+}
+
+package "External Services" as external EXTERNAL {
+    [Generation Base Service] as genBase
+    [Analysis Service] as analysis
+    [Communication Service] as comm
+    [Category Service] as categoryService
+}
+
+' Define relationships
+reqController --> requestService : uses
+tempController --> templateService : uses
+reqController --> batchProcessor : uses for batch processing
+purposeController --> purposeService : uses
+categoryController --> catRepoClient : uses
+jobController --> batchScheduler : uses
+
+requestService ..> IOrcheService : depends on
+requestService ..> ITempService : depends on
+requestService ..> INlpService : depends on
+requestService ..> IContextService : depends on
+requestService ..> ICommService : depends on
+requestService ..> IReqRepo : depends on
+
+templateService ..> ITempRepo : depends on
+purposeService ..> IPurposeRepo : depends on
+
+batchProcessor ..> IReqService : depends on
+batchProcessor ..> IContextService : depends on
+batchProcessor ..> ICatRepo : depends on
+batchProcessor ..> ITempService : depends on
+batchProcessor --> jobConfig : uses
+
+batchScheduler --> batchProcessor : triggers jobs
+batchScheduler --> cronJobManager : manages job scheduling
+batchScheduler --> jobStatusTracker : tracks job execution
+batchScheduler --> batchConfigLoader : loads job configurations
+
+batchConfigLoader --> batchConfigJson : reads configuration
+batchConfigLoader --> configManager : uses for validation
+
+IOrcheService <|.. orchService : implements
+ITempService <|.. templateService : implements
+INlpService <|.. nlpService : implements
+IContextService <|.. contextService : implements
+ICommService <|.. loggingCommService : implements
+ITempRepo <|.. fileTemplateRepo : implements
+IReqRepo <|.. inMemoryReqRepo : implements
+IPurposeRepo <|.. filePurposeRepo : implements
+ICatRepo <|.. catRepoClient : implements
+
+execTemplate --> serviceType : uses
+batchProcessor --> batchType : uses
+orchService --> genClient : delegates to
+orchService --> analysisClient : delegates to
+orchService --> commClient : delegates to
+
+fileTemplateRepo --> fileStorage : reads/writes
+inMemoryReqRepo --> memStorage : reads/writes
+filePurposeRepo --> fileStorage : reads/writes
+contextService --> fileStorage : persists contexts
+
+nlpService --> purpose : uses for detection
+
+genClient --> genBase : communicates with
+analysisClient --> analysis : communicates with
+commClient --> comm : communicates with
+catRepoClient --> categoryService : communicates with
+
+requestService ..> request : creates/manages
+requestService ..> user : references
+
+' Add notes
+note right of reqController
+  Handles both individual and batch requests.
+  Provides endpoints for batch processing,
+  status checking, and result retrieval.
+  Integrates with batch processor and scheduler.
+end note
+
+note right of orchService
+  Orchestrates execution flow 
+  based on template service type.
+  Validates and processes results.
+end note
+
+note right of requestService
+  Central service that coordinates
+  request processing, template selection,
+  context management, and notifications.
+end note
+
+note right of batchProcessor
+  Handles processing of batches as:
+  - Individual (each item separately)
+  - Object (entire category as one)
+  - Combined (multiple categories)
+  Uses job-based configuration.
+  Implements priority-based processing.
+  Supports result distribution.
+end note
+
+note right of batchScheduler
+  Schedules and manages batch
+  processing jobs with various
+  frequencies (daily, weekly, monthly).
+  Supports job prioritization.
+  Implements retry mechanism with backoff.
+  Tracks job execution history.
+end note
+
+note right of contextService
+  Manages execution contexts
+  for requests and batch operations.
+  Stores batch references for users.
+  Supports matrix-based references.
+end note
+
+note right of catRepoClient
+  Communicates with Category Service.
+  Caches frequently accessed data.
+  Supports filtering based on job config.
+  Provides fallback mechanisms.
+end note
+
+note right of batchConfigJson
+  Structured configuration for batch jobs:
+  - job definitions
+  - scheduling options
+  - filtering criteria
+  - distribution settings
+  - priority levels
+  - retry configuration
+end note
+
+note right of jobController
+  Exposes APIs for:
+  - getting job status
+  - managing job schedules
+  - triggering immediate job execution
+  - viewing job execution history
+end note
+
+@enduml 

@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  user-details:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - CONFIG_PATH=config/templates
+      - PORT=5000
+      - DATABASE_LAYER_BASE_URL=http://user-data-service:8000
+      - DATABASE_LAYER_API_KEY=${DATABASE_LAYER_API_KEY:-default_api_key}
+      - SUBSCRIPTION_SERVICE_URL=http://subscription-service:8080
+      - DEVELOPMENT_MODE=false
+    volumes:
+      - ./config:/app/config
+    depends_on:
+      - user-data-service
+    networks:
+      - prismicx-network
+
+  user-data-service:
+    build:
+      context: ../../database-layer/user-data-service
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/user_insights
+      - POSTGRES_URI=postgresql://postgres:postgres@postgres:5432/user_extensions
+      - API_KEY=${DATABASE_LAYER_API_KEY:-default_api_key}
+    depends_on:
+      - mongodb
+      - postgres
+    networks:
+      - prismicx-network
+
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - prismicx-network
+
+  postgres:
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=user_extensions
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - prismicx-network
+
+volumes:
+  mongodb_data:
+  postgres_data:
+
+networks:
+  prismicx-network:
+    name: prismicx-network
+    driver: bridge 

@@ -1,0 +1,185 @@
+@startuml Template Purpose Alignment System - Classes
+
+title "Template-Purpose Alignment System - Class Diagram"
+
+' Define interfaces
+interface "ITemplateRepository" as ITemplateRepo {
+  +get_by_id(template_id: str): ExecutionTemplate
+  +list_by_service_type(service_type: ServiceType): List[ExecutionTemplate]
+  +save(template: ExecutionTemplate): bool
+  +delete(template_id: str): bool
+}
+
+interface "IPurposeRepository" as IPurposeRepo {
+  +get_purpose(purpose_id: str): Purpose
+  +list_purposes(): List[Purpose]
+  +add_purpose(purpose: Purpose): bool
+  +update_purpose(purpose: Purpose): bool
+  +delete_purpose(purpose_id: str): bool
+  +get_purpose_by_name(name: str): Purpose
+}
+
+interface "INotificationService" as INotifService {
+  +send_notification(message: str, subject: str, recipients: List[str], metadata: Dict, type: NotificationType, priority: NotificationPriority): bool
+  +send_alignment_notification(unaligned_items: Dict): bool
+}
+
+' Define enums
+enum "NotificationType" as NotifType {
+  SYSTEM
+  ERROR
+  WARNING
+  ALIGNMENT
+}
+
+enum "NotificationPriority" as NotifPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum "ServiceType" as SvcType {
+  GENERATIVE
+  ANALYSIS
+  COMMUNICATION
+}
+
+' Define classes
+class "ExecutionTemplate" as Template {
+  +id: str
+  +service_type: ServiceType
+  +description: str
+  +service_template: Dict
+  +created_by: str
+  +created_at: datetime
+  +updated_at: datetime
+  +to_dict(): Dict
+  +{static} from_dict(data: Dict): ExecutionTemplate
+}
+
+class "Purpose" as Purpose {
+  +id: str
+  +name: str
+  +description: str
+  +keywords: List[str]
+  +template_ids: List[str]
+  +attributes: Dict
+  +is_active: bool
+  +to_dict(): Dict
+  +{static} from_dict(data: Dict): Purpose
+}
+
+class "FileTemplateRepository" as FileTemplateRepo {
+  -file_path: str
+  -_templates: Dict[str, ExecutionTemplate]
+  -_loaded: bool
+  -_lock: asyncio.Lock
+  +__init__(file_path: str)
+  -_ensure_loaded(): None
+  -_load_templates(): None
+  -_save_templates(): None
+  +get_by_id(template_id: str): ExecutionTemplate
+  +list_by_service_type(service_type: ServiceType): List[ExecutionTemplate]
+  +save(template: ExecutionTemplate): bool
+  +delete(template_id: str): bool
+}
+
+class "FilePurposeRepository" as FilePurposeRepo {
+  -file_path: str
+  -purposes: Dict[str, Purpose]
+  -logger: Logger
+  +__init__(file_path: str = None)
+  -_load_purposes(): None
+  -_reload_purposes(): None
+  +get_purpose(purpose_id: str): Purpose
+  +list_purposes(): List[Purpose]
+  +add_purpose(purpose: Purpose): bool
+  +update_purpose(purpose: Purpose): bool
+  +delete_purpose(purpose_id: str): bool
+  +get_purpose_by_name(name: str): Purpose
+  -_handle_dict_format(purpose_data: Dict): None
+  -_handle_list_format(purpose_data: List): None
+}
+
+class "LogNotificationService" as LogNotifService {
+  -notification_file: str
+  -admin_emails: List[str]
+  -logger: Logger
+  +__init__(notification_file: str, admin_emails: List[str])
+  +send_notification(message: str, subject: str, recipients: List[str], metadata: Dict, type: NotificationType, priority: NotificationPriority): bool
+  +send_alignment_notification(unaligned_items: Dict): bool
+  -_format_alignment_message(unaligned_items: Dict): str
+  -_get_priority_for_alignment_issues(unaligned_items: Dict): NotificationPriority
+  -_log_notification(notification_data: Dict): None
+}
+
+class "TemplateService" as TemplateService {
+  -template_repository: ITemplateRepo
+  -purpose_repository: IPurposeRepo
+  -notification_service: INotifService
+  -logger: Logger
+  +__init__(template_repository: ITemplateRepo, purpose_repository: IPurposeRepo, notification_service: INotifService = None)
+  -_schedule_alignment_check(): None
+  +add_template(template_data: Dict): str
+  +get_template_by_purpose_id(purpose_id: str): ExecutionTemplate
+  +check_purpose_template_alignment(): Dict
+  -_find_templates_without_purposes(templates: List[ExecutionTemplate], purposes: List[Purpose]): List[str]
+  -_find_purposes_without_templates(purposes: List[Purpose]): List[str]
+  -_find_purposes_with_missing_templates(purposes: List[Purpose], templates: List[ExecutionTemplate]): List[Dict]
+}
+
+class "ApplicationService" as AppService {
+  -template_service: TemplateService
+  -notification_service: INotifService
+  -config: Dict
+  -alignment_check_interval: int
+  -logger: Logger
+  +__init__(template_service: TemplateService, notification_service: INotifService, config: Dict = {})
+  -_schedule_alignment_checks(): None
+  -_run_periodic_alignment_checks(): None
+  +check_and_notify_alignment(): Dict
+}
+
+class "AlignmentRouter" as AlignmentRouter {
+  -logger: Logger
+  +{static} get_app_service(): ApplicationService
+  +check_alignment(app_service: ApplicationService): Dict
+  +get_alignment_status(app_service: ApplicationService): Dict
+}
+
+class "ServiceFactory" as ServiceFactory {
+  +{static} create_and_initialize_application_service(config: Dict = None, base_dir: str = None): ApplicationService
+  +{static} create_template_service(config: Dict = None): TemplateService
+  +{static} create_notification_service(config: Dict = None): INotifService
+}
+
+' Define relationships
+ITemplateRepo <|.. FileTemplateRepo
+IPurposeRepo <|.. FilePurposeRepo
+INotifService <|.. LogNotifService
+
+Template -- SvcType
+Template "1" o-- "many" Purpose : used by >
+
+AppService o-- TemplateService
+AppService o-- INotifService
+
+AlignmentRouter -- AppService : uses >
+ServiceFactory ..> AppService : creates >
+ServiceFactory ..> TemplateService : creates >
+ServiceFactory ..> FileTemplateRepo : creates >
+ServiceFactory ..> FilePurposeRepo : creates >
+ServiceFactory ..> LogNotifService : creates >
+
+TemplateService o-- ITemplateRepo
+TemplateService o-- IPurposeRepo
+TemplateService o-- INotifService
+
+INotifService -- NotifType
+INotifService -- NotifPriority
+
+LogNotifService ..> NotifType
+LogNotifService ..> NotifPriority
+
+@enduml 

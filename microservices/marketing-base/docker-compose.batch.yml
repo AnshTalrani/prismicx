@@ -1,0 +1,141 @@
+version: '3.8'
+
+services:
+  # Main marketing service
+  marketing-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: marketing-base:latest
+    container_name: marketing-service
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/marketing
+      - REDIS_URL=redis://redis:6379/0
+      - WORKER_CONCURRENCY=4
+      - LOG_LEVEL=info
+      - ENABLE_BATCH_PROCESSING=true
+      - BATCH_PROCESSING_INTERVAL=3600
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - marketing-network
+    volumes:
+      - ./config:/app/config
+      - ./logs:/app/logs
+
+  # Batch worker service - dedicated to processing batch campaigns
+  batch-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    image: marketing-batch-worker:latest
+    container_name: marketing-batch-worker
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/marketing
+      - REDIS_URL=redis://redis:6379/0
+      - WORKER_CONCURRENCY=2
+      - LOG_LEVEL=info
+      - WORKER_QUEUE=batch_campaigns
+      - WORKER_TYPE=batch
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - marketing-network
+    volumes:
+      - ./config:/app/config
+      - ./logs:/app/logs
+
+  # Database service
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    restart: always
+    environment:
+      - MONGO_INITDB_DATABASE=marketing
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./mongo-init:/docker-entrypoint-initdb.d
+    networks:
+      - marketing-network
+
+  # Redis for task queue
+  redis:
+    image: redis:alpine
+    container_name: redis
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - marketing-network
+    volumes:
+      - redis_data:/data
+
+  # Client databases simulation - for testing and development
+  # These represent separate client databases in a real multi-client environment
+  client-db-1:
+    image: mongo:latest
+    container_name: client-db-1
+    restart: always
+    environment:
+      - MONGO_INITDB_DATABASE=client_1
+    ports:
+      - "27018:27017"
+    volumes:
+      - client1_data:/data/db
+      - ./test-data/client1:/docker-entrypoint-initdb.d
+    networks:
+      - marketing-network
+
+  client-db-2:
+    image: mongo:latest
+    container_name: client-db-2
+    restart: always
+    environment:
+      - MONGO_INITDB_DATABASE=client_2
+    ports:
+      - "27019:27017"
+    volumes:
+      - client2_data:/data/db
+      - ./test-data/client2:/docker-entrypoint-initdb.d
+    networks:
+      - marketing-network
+
+  # Monitoring service
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_USER=admin
+    depends_on:
+      - prometheus
+    networks:
+      - marketing-network
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: always
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - marketing-network
+
+volumes:
+  mongodb_data:
+  redis_data:
+  client1_data:
+  client2_data:
+
+networks:
+  marketing-network:
+    driver: bridge 

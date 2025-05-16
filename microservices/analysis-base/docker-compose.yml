@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  analysis-base:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./:/app
+    environment:
+      - ENVIRONMENT=development
+      - LOG_LEVEL=DEBUG
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/analysis_db
+    depends_on:
+      - db
+    networks:
+      - analysis-network
+    command: uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
+
+  db:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=analysis_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - analysis-network
+
+networks:
+  analysis-network:
+    driver: bridge
+
+volumes:
+  postgres_data: 

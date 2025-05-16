@@ -1,0 +1,38 @@
+{
+  "id": "instagram_post_generator",
+  "version": "1.0",
+  "description": "Generates engaging Instagram posts based on topic and brand details",
+  "service_type": "GENERATIVE",
+  "processing_mode": "realtime",
+  "generative_template": {
+    "template_type": "function",
+    "orchestrator": {
+      "input": [
+        "topic", 
+        "tone", 
+        "target_audience", 
+        "key_points"
+      ],
+      "functions": [
+        "content_generator", 
+        "hashtag_generator"
+      ],
+      "output": [
+        "post_text", 
+        "hashtags", 
+        "image_prompt"
+      ]
+    },
+    "generation_parameters": {
+      "max_length": 2200,
+      "include_hashtags": true,
+      "max_hashtags": 30,
+      "creativity_level": 0.7,
+      "brand_voice": "professional",
+      "output_format": "instagram_post"
+    }
+  },
+  "created_by": "system",
+  "created_at": "2024-01-01T00:00:00Z",
+  "updated_at": "2024-01-01T00:00:00Z"
+} 

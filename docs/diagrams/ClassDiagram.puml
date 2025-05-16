@@ -1,0 +1,543 @@
+@startuml Integrated Microservices Class Diagram
+
+' -------------------------------------------------------------------
+' SKIN AND STYLING
+' -------------------------------------------------------------------
+skinparam packageTitleFontColor #333333
+skinparam packageTitleBackgroundColor #DCDCDC
+skinparam packageBorderColor #888888
+skinparam classBackgroundColor #F8F8F8
+skinparam classBorderColor #999999
+skinparam classArrowColor #000000
+skinparam classFontColor #000000
+skinparam interfaceFontColor DarkGreen
+skinparam interfaceBackgroundColor #F0F8FF
+
+' -------------------------------------------------------------------
+' GENERATIVE BASE MICROSERVICE
+' -------------------------------------------------------------------
+package "Generative Base Microservice" <<GenerativeBase>> {
+
+    ' Interfaces
+    interface IDeepInputProcessor {
+        +analyzeInput(raw_data: String) : dict
+    }
+
+    interface IExpertPreProcessor {
+        +optimizeTemplate(structured_data: dict) : dict
+    }
+
+    interface IOutputGenerator {
+        +generateContent(template_data: dict) : String
+    }
+
+    interface IExpertPro {
+        +enhanceContent(content: String, niche: String) : String
+    }
+
+    interface IMLFinetuner {
+        +finetuneContent(content: String) : String
+    }
+
+    interface IPostProcessor {
+        +validateContent(content: String) : bool
+        +getValidationErrors(content: String) : list
+    }
+
+    interface ILogger {
+        +logActivity(activity: String) : void
+        +logError(error: String) : void
+    }
+
+    interface IErrorHandler {
+        +handleError(error: Exception) : void
+    }
+
+    ' Classes
+    class GenerativeBaseAPI {
+        +processRequest(raw_data: String, niche: String = None) : String
+        +healthCheck() : String
+    }
+
+    class DeepInputProcessing implements IDeepInputProcessor {
+        +analyzeInput(raw_data: String) : dict
+    }
+
+    class ExpertPreProcessor implements IExpertPreProcessor {
+        +optimizeTemplate(structured_data: dict) : dict
+    }
+
+    class OutputGenerator implements IOutputGenerator {
+        +generateContent(template_data: dict) : String
+    }
+
+    class ExpertPro implements IExpertPro {
+        +enhanceContent(content: String, niche: String) : String
+    }
+
+    class MLFinetuner implements IMLFinetuner {
+        +finetuneContent(content: String) : String
+    }
+
+    class PostProcessor implements IPostProcessor {
+        +validateContent(content: String) : bool
+        +getValidationErrors(content: String) : list
+    }
+
+    class Logger implements ILogger {
+        +logActivity(activity: String) : void
+        +logError(error: String) : void
+    }
+
+    class ErrorHandler implements IErrorHandler {
+        +handleError(error: Exception) : void
+    }
+
+    ' Relationships
+    GenerativeBaseAPI --> IDeepInputProcessor : uses
+    GenerativeBaseAPI --> IExpertPreProcessor : uses
+    GenerativeBaseAPI --> IOutputGenerator : uses
+    GenerativeBaseAPI --> IExpertPro : uses
+    GenerativeBaseAPI --> IMLFinetuner : uses
+    GenerativeBaseAPI --> IPostProcessor : uses
+    GenerativeBaseAPI --> ILogger : uses
+    GenerativeBaseAPI --> IErrorHandler : uses
+
+    DeepInputProcessing --> Logger : logs to
+    ExpertPreProcessor --> Logger : logs to
+    OutputGenerator --> Logger : logs to
+    ExpertPro --> Logger : logs to
+    MLFinetuner --> Logger : logs to
+    PostProcessor --> Logger : logs to
+    ErrorHandler --> Logger : logs to
+
+    DeepInputProcessing ..|> IDeepInputProcessor
+    ExpertPreProcessor ..|> IExpertPreProcessor
+    OutputGenerator ..|> IOutputGenerator
+    ExpertPro ..|> IExpertPro
+    MLFinetuner ..|> IMLFinetuner
+    PostProcessor ..|> IPostProcessor
+    Logger ..|> ILogger
+    ErrorHandler ..|> IErrorHandler
+
+}
+
+' -------------------------------------------------------------------
+' EXPERT BOTS MICROSERVICE
+' -------------------------------------------------------------------
+package "Expert Bots Microservice" <<ExpertBots>> {
+
+    ' Interfaces
+    interface ILLMManager {
+        +loadModel(platformOrTool: String) : void
+        +generateContent(parameters: dict) : String
+        +createPrompt(parameters: dict) : String
+        +validateContent(checklists: List, content: String) : bool
+    }
+
+    interface IConfigurationManager {
+        +getPlatformConfig(platformID: String) : dict
+        +getToolConfig(toolID: String) : dict
+        +updateConfigurations(newConfigs: dict) : void
+    }
+
+    interface ILogger {
+        +logActivity(activity: String) : void
+        +logError(error: String) : void
+    }
+
+    interface IErrorHandler {
+        +handleError(error: Exception) : void
+    }
+
+    ' Classes
+    class ExpertBotAPI {
+        +generateContent(userID: String, platformID: String, parameters: dict) : String
+        +generatePrompt(userID: String, toolID: String, parameters: dict) : String
+        +validateContent(contentID: String, content: String) : bool
+        +updateConfigurations(newConfigs: dict) : void
+        +healthCheck() : String
+    }
+
+    class LLMManager implements ILLMManager {
+        -models: dict
+        +loadModel(platformOrTool: String) : void
+        +generateContent(parameters: dict) : String
+        +createPrompt(parameters: dict) : String
+        +validateContent(checklists: List, content: String) : bool
+    }
+
+    class GenerationEngine {
+        +processContentGeneration(platformConfig: dict, parameters: dict) : String
+        +processPromptGeneration(toolConfig: dict, parameters: dict) : String
+        +processContentValidation(checklists: List, content: String) : bool
+    }
+
+    class ConfigurationManager implements IConfigurationManager {
+        -platformConfigs: dict
+        -toolConfigs: dict
+        +getPlatformConfig(platformID: String) : dict
+        +getToolConfig(toolID: String) : dict
+        +updateConfigurations(newConfigs: dict) : void
+    }
+
+    class PreProductionModule {
+        +generatePlatformSpecificContent(platformConfig: dict, parameters: dict) : String
+    }
+
+    class ProductionModule {
+        +createToolSpecificPrompt(toolConfig: dict, parameters: dict) : String
+    }
+
+    class PostProductionModule {
+        +validateContentAgainstChecklists(checklists: List, content: String) : bool
+    }
+
+    class ChecklistRepository {
+        +getChecklists(contentType: String, platformOrToolID: String) : List
+    }
+
+    class Logger implements ILogger {
+        +logActivity(activity: String) : void
+        +logError(error: String) : void
+    }
+
+    class ErrorHandler implements IErrorHandler {
+        +handleError(error: Exception) : void
+    }
+
+    ' Relationships
+    ExpertBotAPI --> ILLMManager : uses
+    ExpertBotAPI --> IConfigurationManager : uses
+    ExpertBotAPI --> ILogger : uses
+    ExpertBotAPI --> IErrorHandler : uses
+
+    LLMManager --> GenerationEngine : uses
+    ConfigurationManager --> PreProductionModule : configures
+    ConfigurationManager --> ProductionModule : configures
+    ConfigurationManager --> PostProductionModule : configures
+
+    PreProductionModule --> LLMManager : utilizes
+    ProductionModule --> LLMManager : utilizes
+    PostProductionModule --> ChecklistRepository : retrieves
+
+    GenerationEngine --> PreProductionModule
+    GenerationEngine --> ProductionModule
+    GenerationEngine --> PostProductionModule
+
+    Logger ..|> ILogger
+    ErrorHandler ..|> IErrorHandler
+    ConfigurationManager ..|> IConfigurationManager
+    LLMManager ..|> ILLMManager
+
+}
+
+' -------------------------------------------------------------------
+' USER-DETAILS MICROSERVICE
+' -------------------------------------------------------------------
+package "User-Details Microservice" <<UserDetails>> {
+
+    ' Interfaces
+    interface IUserInsightAPI {
+        +addData(userID: String, purposeID: String, layerID: String, data: UserInsight) : void
+        +retrieveData(userID: String, purposeID: String, layerID: String) : UserInsight
+    }
+
+    ' Classes
+    class UserInsightAPI implements IUserInsightAPI {
+        +addData(userID: String, purposeID: String, layerID: String, data: UserInsight) : void
+        +retrieveData(userID: String, purposeID: String, layerID: String) : UserInsight
+        +loadPresetConfigs() : void
+        --
+        -configManager : ConfigManager
+        -repository : UserInsightRepository
+        --
+        note right
+          Handles adding and retrieving UserInsight data based on
+          UserID, PurposeID, and LayerID using preset configurations.
+        end note
+    }
+
+    class ConfigManager {
+        +getRelevantTopics(purposeID: String, layerID: String) : List<Topic>
+        +getRelevantSubtopics(topicID: String) : List<Subtopic>
+        --
+        note right
+          Manages preset configurations to determine relevant topics
+          and subtopics based on PurposeID and LayerID.
+        end note
+    }
+
+    class UserInsight {
+        -userID : String
+        -purposeID : String
+        -layerID : String
+        -topics : List<Topic>
+        -practicality : Practicality
+        --
+        +validateInsight() : bool
+        --
+        note right
+          Represents the comprehensive UserInsight document containing
+          all relevant user data and interconnected topics.
+        end note
+    }
+
+    class Topic {
+        -topicID : String
+        -name : String
+        -subtopics : List<Subtopic>
+        --
+        +addSubtopic(subtopic: Subtopic) : void
+    }
+
+    class Subtopic {
+        -subtopicID : String
+        -name : String
+        -relatedSubtopics : List<Subtopic>
+        --
+        +connectSubtopic(subtopic: Subtopic) : void
+    }
+
+    class Practicality {
+        -secretSauces : List<SecretSauce>
+        -factors : List<Factor>
+        --
+        +addSecretSauce(sauce: SecretSauce) : void
+        +addFactor(factor: Factor) : void
+    }
+
+    class SecretSauce {
+        -sauceID : String
+        -description : String
+        --
+        +getDescription() : String
+    }
+
+    class Factor {
+        -factorID : String
+        -name : String
+        -description : String
+        --
+        +getFactorDetails() : String
+    }
+
+    class UserInsightExtension {
+        -generatedContentHistory : List<GeneratedContent>
+        -userInteractions : List<UserInteraction>
+        -performanceMetrics : PerformanceMetrics
+        -feedbackReviews : List<FeedbackReview>
+        -sessions : List<Session>
+        --
+        +logContent(content: GeneratedContent) : void
+        +recordInteraction(interaction: UserInteraction) : void
+    }
+
+    class GeneratedContent {
+        -contentID : String
+        -type : String
+        -body : String
+        -dateCreated : Date
+        -performanceMetrics : PerformanceMetrics
+        --
+        +getContentDetails() : String
+    }
+
+    class UserInteraction {
+        -sessionID : String
+        -preferences : String
+        -timestamp : Date
+        --
+        +getInteractionDetails() : String
+    }
+
+    class PerformanceMetrics {
+        -likes : int
+        -shares : int
+        -comments : int
+        -sales : float
+        -websiteTraffic : int
+        -conversionRate : float
+        --
+        +updateMetrics(newMetrics: PerformanceMetrics) : void
+    }
+
+    class FeedbackReview {
+        -reviewID : String
+        -source : String
+        -content : String
+        -timestamp : Date
+        --
+        +getReviewDetails() : String
+    }
+
+    class Session {
+        -sessionID : String
+        -activityLog : List<String>
+        -startTime : Date
+        -endTime : Date
+        --
+        +logActivity(activity: String) : void
+    }
+
+    class UserInsightRepository {
+        +save(userInsight: UserInsight) : void
+        +find(userID: String, purposeID: String, layerID: String) : UserInsight
+        --
+        note right
+          Handles data storage and retrieval for UserInsight documents.
+        end note
+    }
+
+    ' Relationships
+    UserInsightAPI --> ConfigManager : uses
+    UserInsightAPI --> UserInsightRepository : uses
+    UserInsightAPI --> UserInsight : manages
+    UserInsight --> Topic
+    UserInsight --> Practicality
+    UserInsight --> UserInsightExtension
+    Topic --> Subtopic
+    Subtopic --> Subtopic : interconnected
+    Practicality --> SecretSauce
+    Practicality --> Factor
+    UserInsightExtension --> GeneratedContent
+    UserInsightExtension --> UserInteraction
+    UserInsightExtension --> PerformanceMetrics
+    UserInsightExtension --> FeedbackReview
+    UserInsightExtension --> Session
+
+    ' Each UserInsight has one UserInsightExtension and one Practicality
+    UserInsight "1" -- "1" UserInsightExtension : contains
+    UserInsight "1" -- "1" Practicality : includes
+
+}
+
+' -------------------------------------------------------------------
+' AGENT MICROSERVICE
+' -------------------------------------------------------------------
+package "Agent Microservice" <<Agent>> {
+
+    ' Interfaces
+    interface IRequestHandler {
+        +receiveRequest(request: Request) : void
+    }
+
+    interface IRequirementAnalyzer {
+        +analyzeRequest(request: Request) : AnalysisResult
+    }
+
+    interface ITemplateSelector {
+        +selectTemplate(purpose: String, layer: String) : FunctionTemplate
+    }
+
+    interface IOrchestrator {
+        +orchestrate(template: FunctionTemplate, data: Any) : void
+    }
+
+    interface IFunctionExecutor {
+        +execute(functionTemplate: FunctionTemplate, inputData: Any) : Any
+    }
+
+    interface IErrorHandler {
+        +handleError(error: Exception) : void
+    }
+
+    interface IDataManager {
+        +injectData(data: Any) : Any
+        +omitData(data: Any) : Any
+    }
+
+    interface ILogger {
+        +logActivity(activity: String) : void
+        +reportIssue(issue: String) : void
+    }
+
+    ' Classes
+    class RequestHandler implements IRequestHandler {
+        +receiveRequest(request: Request) : void
+        --
+        -analyzer : RequirementAnalyzer
+        -templateSelector : TemplateSelector
+        -orchestrator : Orchestrator
+        -errorHandler : ErrorHandler
+        -logger : Logger
+    }
+
+    class RequirementAnalyzer implements IRequirementAnalyzer {
+        +analyzeRequest(request: Request) : AnalysisResult
+    }
+
+    class TemplateSelector implements ITemplateSelector {
+        +selectTemplate(purpose: String, layer: String) : FunctionTemplate
+        --
+        -templateFactory : ITemplateFactory
+        -templateRepository : ITemplateRepository
+    }
+
+    class Orchestrator implements IOrchestrator {
+        +orchestrate(template: FunctionTemplate, data: Any) : void
+        --
+        -functionExecutor : IFunctionExecutor
+        -strategy : IOrchestrationStrategy
+        -dataManager : DataManager
+    }
+
+    class FunctionExecutor implements IFunctionExecutor {
+        +execute(functionTemplate: FunctionTemplate, inputData: Any) : Any
+    }
+
+    class ErrorHandler implements IErrorHandler {
+        +handleError(error: Exception) : void
+    }
+
+    class DataManager implements IDataManager {
+        +injectData(data: Any) : Any
+        +omitData(data: Any) : Any
+    }
+
+    class Logger implements ILogger {
+        +logActivity(activity: String) : void
+        +reportIssue(issue: String) : void
+    }
+
+    ' Relationships
+    RequestHandler --> IRequirementAnalyzer : uses
+    RequestHandler --> ITemplateSelector : uses
+    RequestHandler --> IOrchestrator : uses
+    RequestHandler --> IErrorHandler : uses
+    RequestHandler --> ILogger : uses
+
+    RequirementAnalyzer ..|> IRequirementAnalyzer
+    TemplateSelector ..|> ITemplateSelector
+    Orchestrator ..|> IOrchestrator
+    FunctionExecutor ..|> IFunctionExecutor
+    ErrorHandler ..|> IErrorHandler
+    DataManager ..|> IDataManager
+    Logger ..|> ILogger
+
+}
+
+' -------------------------------------------------------------------
+' INTEGRATION BETWEEN MICROSERVICES
+' -------------------------------------------------------------------
+
+' Generative Base interacts with Expert Bots
+GenerativeBaseAPI --> ExpertBotAPI : uses generateContent(), createPrompt()
+
+' Generative Base interacts with User Details
+GenerativeBaseAPI --> UserInsightAPI : uses retrieveData(), addData()
+
+' Generative Base interacts with Agent
+GenerativeBaseAPI --> RequestHandler : sends orchestrated requests
+
+' Expert Bots interacts with Generative Base for content enhancement
+ExpertPro --> ExpertBotAPI : calls generateContent(), createPrompt()
+
+' User Details interacts with Generative Base for user insights
+DeepInputProcessing --> UserInsightAPI : retrieves user insights
+ExpertPreProcessor --> UserInsightAPI : retrieves user insights
+
+' Agent interacts with Generative Base
+RequestHandler --> GenerativeBaseAPI : invokes processRequest()
+
+@enduml

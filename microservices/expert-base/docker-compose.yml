@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  expert-base:
+    build:
+      context: ../../
+      dockerfile: microservices/expert-base/Dockerfile
+    container_name: expert-base
+    ports:
+      - "8070:8000"
+    environment:
+      # API Configuration
+      - API_KEY=dev_expert_base_key
+      - LOG_LEVEL=INFO
+      
+      # Vector DB Configuration
+      - VECTOR_DB_TYPE=chroma
+      - VECTOR_DB_HOST=chroma-db
+      - VECTOR_DB_PORT=8000
+      
+      # Model Server Configuration
+      - MODEL_SERVER_URL=http://model-server:8080
+      - DEFAULT_MODEL=gpt-3.5-turbo
+      
+      # Redis Configuration (for caching)
+      - REDIS_URL=redis://redis:6379/0
+      
+      # Integration Configuration
+      - ALLOWED_ORIGINS=http://generative-base:8000,http://analysis-base:8100,http://marketing-base:8200
+    networks:
+      - expert-net
+      - redis-net
+      - model-net
+    depends_on:
+      - redis
+      - chroma-db
+      - model-server
+
+  # Vector Database
+  chroma-db:
+    image: ghcr.io/chroma-core/chroma:latest
+    container_name: chroma-db
+    volumes:
+      - chroma-data:/chroma/data
+    ports:
+      - "8071:8000"
+    networks:
+      - expert-net
+
+  # Redis for caching
+  redis:
+    image: redis:7-alpine
+    container_name: expert-redis
+    ports:
+      - "8072:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - redis-net
+
+  # Model Server (placeholder)
+  model-server:
+    image: ghcr.io/huggingface/text-generation-inference:latest
+    container_name: model-server
+    ports:
+      - "8073:8080"
+    volumes:
+      - model-data:/data
+    environment:
+      - MODEL_ID=gpt2
+    networks:
+      - model-net
+
+networks:
+  expert-net:
+    driver: bridge
+  redis-net:
+    driver: bridge
+  model-net:
+    driver: bridge
+
+volumes:
+  chroma-data:
+  redis-data:
+  model-data: 

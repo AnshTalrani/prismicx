@@ -1,0 +1,203 @@
+@startuml Batch Processing, Scheduling and Configuration
+
+' Style settings
+skinparam backgroundColor white
+skinparam handwritten false
+skinparam monochrome false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam componentStyle uml2
+
+' Define components
+package "Batch Configuration" {
+  [batch_config.json] as config_file
+  note right of config_file
+    Contains:
+    - user_batches map
+    - batch definitions
+    - purpose_ids
+    - user lists
+    - schedules
+    - default data
+    - preference_based flag
+    - feature_type for preferences
+  end note
+}
+
+package "Preference Management" {
+  [ConfigDatabaseClient] as config_client
+  [UserPreferenceCache] as pref_cache
+  
+  database "Config Database" as config_db
+  
+  note right of config_client
+    ConfigDatabaseClient Features:
+    - Retrieves user preferences
+    - Groups similar preferences
+    - Monitors preference changes
+    - Caching with configurable TTL
+    - Multi-tenant support
+  end note
+}
+
+package "Batch Processing" {
+  [BatchProcessor] as processor
+  [ContextManager] as context
+  [RequestService] as request
+  [JobStatistics] as stats
+  [CategoryRepositoryClient] as category_repo
+  
+  database "Batch Results" as results
+  
+  note right of processor
+    BatchProcessor Features:
+    - DEFAULT_BATCH_SIZE = 100
+    - Four batch processing types:
+      * Individual
+      * Object
+      * Combined
+      * Preference-based
+    - Enhanced status tracking
+    - Result reference management
+    - Comprehensive error handling
+  end note
+  
+  note bottom of stats
+    JobStatistics Features:
+    - Per-job statistics tracking
+    - Purpose-specific metrics
+    - Tenant-specific metrics
+    - Historical execution data
+    - Performance analytics
+  end note
+  
+  note right of category_repo
+    CategoryRepositoryClient Features:
+    - Standard data retrieval
+    - Preference-based filtering
+    - Tenant-specific access
+    - Caching with fallbacks
+  end note
+}
+
+package "Scheduling" {
+  [BatchScheduler] as scheduler
+  [CronJobManager] as cron
+  [PreferenceGroupScheduler] as pref_scheduler
+  
+  note right of scheduler
+    Schedules batch jobs based on:
+    - cron expressions
+    - fixed intervals
+    - one-time schedules
+    - user preferences
+  end note
+  
+  note bottom of pref_scheduler
+    Groups users by preferences:
+    - By frequency (daily, weekly, monthly)
+    - By preferred time
+    - By preferred day
+    - Dynamic adjustment when preferences change
+  end note
+}
+
+package "API Layer" {
+  [BatchAPI] as api
+  
+  note right of api
+    Endpoints:
+    - create_batch
+    - get_batch_status
+    - get_batch_results
+    - schedule_batch
+    - get_job_statistics
+    - get_tenant_batch_summary
+  end note
+}
+
+' Define relationships
+api --> processor : calls
+processor --> config_file : loads configs
+scheduler --> config_file : reads schedules
+scheduler --> processor : triggers execution
+processor --> context : updates status
+processor --> request : processes items
+processor --> stats : tracks statistics
+stats --> results : persists metrics
+context --> results : stores results
+
+' Preference-based relationships
+config_client --> config_db : retrieves preferences
+config_client --> pref_cache : caches preferences
+pref_scheduler --> config_client : gets preference groups
+pref_scheduler --> scheduler : creates dynamic schedules
+processor --> config_client : retrieves user preferences
+processor --> category_repo : gets items with preferences
+scheduler --> pref_scheduler : delegates preference-based jobs
+
+' Show invocation flow for different types
+actor Client
+actor Scheduler
+actor "User Preferences" as Preferences
+
+Client --> api : Manual batch creation
+Scheduler --> scheduler : Scheduled execution
+Preferences --> config_db : Updates preferences
+config_db --> config_client : Notifies of changes
+config_client --> pref_scheduler : Triggers schedule update
+
+' Detailed configuration example
+note bottom of config_file
+  {
+    "user_batches": {
+      "weekly_instagram_posts": {
+        "purpose_ids": ["instagram_post_generator"],
+        "users": ["user1", "user2", "user3"],
+        "schedule": "weekly",
+        "day": "monday",
+        "time": "09:00",
+        "default_data": {
+          "topic": "Weekly Updates",
+          "tone": "professional"
+        },
+        "metadata": {
+          "source": "scheduler",
+          "description": "Weekly Instagram posts for all users"
+        }
+      },
+      "preference_based_instagram": {
+        "purpose_ids": ["instagram_post_generator"],
+        "preference_based": true,
+        "feature_type": "instagram_posts",
+        "priority": "high",
+        "retry_limit": 3,
+        "default_preferences": {
+          "frequency": "weekly",
+          "preferred_day": "monday",
+          "preferred_time": "10:00"
+        }
+      }
+    }
+  }
+end note
+
+' Processing Flows
+note bottom of processor
+  Standard Batch Flow:
+  1. Load job configuration
+  2. Create batch context
+  3. Process items individually or as object
+  4. Track progress and results
+  5. Distribute results if configured
+  
+  Preference-Based Flow:
+  1. Get user preferences from Config Database
+  2. Group users by preferences
+  3. Create preference batch context
+  4. Process each user with their preferences
+  5. Track progress by user and tenant
+  6. Update when preferences change
+end note
+
+@enduml 

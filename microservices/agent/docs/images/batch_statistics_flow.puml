@@ -1,0 +1,141 @@
+@startuml Batch Statistics and Reference Management
+
+' Style settings
+skinparam backgroundColor white
+skinparam handwritten false
+skinparam monochrome false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam componentStyle uml2
+
+' Define components
+package "Batch Processing System" {
+  [BatchProcessor] as processor
+  [JobStatistics] as stats
+  [ContextService] as context
+  
+  database "Statistics Store" as stats_db
+  database "Batch Results" as results
+  
+  ' Define a future component
+  [BatchReferenceManager] as ref_manager #LightGray
+  note right of ref_manager
+    Planned component for
+    reference management
+  end note
+}
+
+' Define relationships
+processor --> stats : initializes and updates
+stats --> stats_db : persists metrics
+processor --> context : stores batch state
+context --> results : persists batch results
+processor --> ref_manager #Gray : will use
+
+' Create detailed flow diagram
+actor "User/System" as user
+participant "BatchProcessor" as proc
+participant "JobStatistics" as jobstats
+database "Statistics Storage" as storage
+
+user -> proc : process_job(job_name, parameters)
+activate proc
+
+' Job statistics initialization
+proc -> proc : generate_batch_id()
+proc -> proc : _get_job_statistics(job_id)
+proc -> jobstats : record_execution_start(batch_id, batch_type, purpose_id, expected_count)
+activate jobstats
+jobstats -> jobstats : Update stats object
+jobstats -> storage : _save_stats()
+proc <-- jobstats
+deactivate jobstats
+
+' Processing occurs
+proc -> proc : _process_batch(batch_id)
+
+' Update statistics during processing
+loop for each processing step
+  proc -> jobstats : update_execution_progress(batch_id, processed, succeeded, failed)
+  activate jobstats
+  jobstats -> jobstats : Update execution metrics
+  jobstats -> jobstats : Update purpose-specific metrics
+  jobstats -> storage : _save_stats()
+  proc <-- jobstats
+  deactivate jobstats
+end
+
+' Complete statistics when done
+proc -> jobstats : record_execution_complete(batch_id, status)
+activate jobstats
+jobstats -> jobstats : Calculate duration
+jobstats -> jobstats : Update final status
+jobstats -> storage : _save_stats()
+proc <-- jobstats
+deactivate jobstats
+
+' Return batch ID to user
+user <-- proc : batch_id
+
+' Statistics retrieval (separate flow)
+user -> proc : get_job_statistics(job_id)
+proc -> jobstats : get_job_statistics()
+activate jobstats
+jobstats -> storage : Load latest stats
+proc <-- jobstats : Complete statistics object
+deactivate jobstats
+user <-- proc : Job statistics
+
+' Purpose statistics retrieval
+user -> proc : get_purpose_statistics(purpose_id)
+proc -> jobstats : get_purpose_statistics(purpose_id)
+activate jobstats
+jobstats -> storage : Load latest stats
+jobstats -> jobstats : Filter for purpose_id
+proc <-- jobstats : Purpose-specific statistics
+deactivate jobstats
+user <-- proc : Purpose statistics
+
+deactivate proc
+
+' Statistics data structure
+note right of jobstats
+  JobStatistics tracking:
+  {
+    "job_id": "job123",
+    "total_executions": 42,
+    "total_processed": 1240,
+    "total_succeeded": 1180,
+    "total_failed": 60,
+    "purpose_stats": {
+      "purpose1": {
+        "total_processed": 840,
+        "total_succeeded": 815,
+        "total_failed": 25,
+        "last_execution": "2023-05-01T10:30:00"
+      },
+      "purpose2": {
+        "total_processed": 400,
+        "total_succeeded": 365,
+        "total_failed": 35,
+        "last_execution": "2023-05-02T14:15:00"
+      }
+    },
+    "executions": [
+      {
+        "execution_id": "batch123",
+        "batch_type": "individual_batch",
+        "purpose_id": "purpose1",
+        "processed": 100,
+        "succeeded": 95,
+        "failed": 5,
+        "status": "completed",
+        "start_time": "2023-05-01T10:00:00",
+        "end_time": "2023-05-01T10:30:00",
+        "duration_seconds": 1800
+      }
+    ]
+  }
+end note
+
+@enduml 

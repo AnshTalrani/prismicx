@@ -1,0 +1,363 @@
+@startuml Core Interfaces and Classes
+
+' Define interfaces and classes
+namespace domain {
+    enum ServiceType {
+        GENERATIVE
+        ANALYSIS
+        COMMUNICATION
+    }
+    
+    class ExecutionTemplate {
+        +id: str
+        +service_type: ServiceType
+        +description: str
+        +version: str
+        +processing_mode: str
+        +service_template: Dict
+        +metadata: Dict
+        +created_by: str
+        +created_at: datetime
+        +updated_at: datetime
+        +to_dict(): Dict
+        +{static} from_dict(data: Dict): ExecutionTemplate
+        +get_service_template(): Dict
+    }
+    
+    class Purpose {
+        +id: str
+        +name: str
+        +description: str
+        +keywords: List[str]
+        +template_id: str
+        +to_dict(): Dict
+        +{static} from_dict(data: Dict): Purpose
+    }
+    
+    class Request {
+        +id: str
+        +user_id: str
+        +text: str
+        +purpose_id: str
+        +data: Dict
+        +metadata: Dict
+        +status: str
+        +created_at: datetime
+        +completed_at: datetime
+        +to_dict(): Dict
+        +{static} from_dict(data: Dict): Request
+    }
+    
+    interface ITemplateRepository {
+        +get_by_id(template_id: str): ExecutionTemplate
+        +list_by_service_type(service_type: ServiceType): List[ExecutionTemplate]
+        +list(): List[ExecutionTemplate]
+        +save(template: ExecutionTemplate): bool
+        +add(template: ExecutionTemplate): bool
+        +delete(template_id: str): bool
+    }
+    
+    interface IRequestRepository {
+        +get_by_id(request_id: str): Request
+        +list_by_user(user_id: str): List[Request]
+        +list_by_status(status: str): List[Request]
+        +save(request: Request): bool
+        +add(request: Request): bool
+        +update_status(request_id: str, status: str): bool
+    }
+    
+    interface IPurposeRepository {
+        +get_by_id(purpose_id: str): Purpose
+        +list(): List[Purpose]
+        +get_by_keywords(keywords: List[str]): List[Purpose]
+        +get_template_id_by_purpose(purpose_id: str): str
+    }
+}
+
+namespace application.interfaces {
+    interface IOrchestrationService {
+        +execute_template(template: ExecutionTemplate, context: Dict): Dict
+    }
+    
+    interface IRequestService {
+        +process_request(text: str, purpose_id: str, user_id: str, data: Dict, metadata: Dict, request_id: str): Dict
+        +process_batch_item(batch_id: str, template_id: str, item_id: str, data: Dict, metadata: Dict, batch_metadata: Dict, source: str): Dict
+    }
+    
+    interface ITemplateService {
+        +add_template(template_data: Dict): Dict
+        +get_template(template_id: str): ExecutionTemplate
+        +list_templates(service_type: ServiceType): List[ExecutionTemplate]
+        +validate_template(template_data: Dict): Tuple[bool, str]
+        +get_service_specific_template(template_id: str): Dict
+        +get_template_by_purpose_id(purpose_id: str): ExecutionTemplate
+    }
+    
+    interface INLPService {
+        +detect_purpose_with_confidence(text: str): Tuple[str, float]
+        +extract_keywords(text: str): List[str]
+        +classify_text(text: str, categories: List[str]): Dict[str, float]
+    }
+    
+    interface IContextService {
+        +create_context(request: Request, template: ExecutionTemplate): Dict
+        +update_context(context_id: str, data: Dict): Dict
+        +get_context(context_id: str): Dict
+        +delete_context(context_id: str): bool
+        +create_batch_context(batch_id: str, metadata: Dict): Dict
+        +update_batch_context(batch_id: str, data: Dict): Dict
+    }
+    
+    interface ICommunicationService {
+        +notify_completion(user_id: str, request_id: str, result: Dict): bool
+        +notify_error(user_id: str, request_id: str, error: Dict): bool
+        +send_message(user_id: str, message: str, metadata: Dict): bool
+    }
+}
+
+namespace application.services {
+    class BatchProcessor {
+        +DEFAULT_BATCH_SIZE: int = 100
+        -_request_service: IRequestService
+        -_context_service: IContextService
+        -_category_repository: ICategoryRepository
+        -_logger: Logger
+        -_active_batches: Dict[str, Dict]
+        -_job_statistics: Dict[str, JobStatistics]
+        -_retry_limit: int
+        -_max_concurrent_items: int
+        
+        +__init__(request_service: IRequestService, context_service: IContextService, category_repository: ICategoryRepository, max_concurrent_items: int, retry_limit: int)
+        +process_job(job_name: str, parameters: Dict = None): str
+        +process_batch(batch_type: BatchType, items: List[Dict], template: ExecutionTemplate = None, metadata: Dict = None): str
+        +get_batch_status(batch_id: str): Dict
+        +cancel_batch(batch_id: str): bool
+        +get_job_statistics(job_id: str): Dict
+        +get_purpose_statistics(purpose_id: str): Dict
+        -_process_batch(batch_id: str): None
+        -_process_individual_batch(batch_id: str, job_config: Dict): Dict
+        -_process_object_batch(batch_id: str, job_config: Dict): Dict
+        -_process_combined_batch(batch_id: str, job_config: Dict): Dict
+        -_process_individual_items(batch_id: str, items: List[Dict], template: ExecutionTemplate = None): None
+        -_process_object_items(batch_id: str, items: List[Dict], template: ExecutionTemplate = None): None
+        -_process_item(batch_id: str, request: Request, template: ExecutionTemplate = None): Dict
+        -_distribute_results(batch_id: str, job_config: Dict, results: Dict): None
+        -_create_request_from_item(item: Dict, batch_id: str): Request
+        -_get_template(template_id: str): ExecutionTemplate
+        -_get_default_items(filters: Dict, limit: int): List[Dict]
+        -_get_job_config(job_name: str): Dict
+        -_merge_parameters(job_config: Dict, parameters: Dict): Dict
+        -_get_job_statistics(job_id: str): JobStatistics
+        -_get_users_by_filters(filters: Dict): List[str]
+        +stop(): None
+        -_load_batch_configs(): None
+    }
+    
+    class JobStatistics {
+        -job_id: str
+        -storage_dir: str
+        -stats_file: str
+        -stats: Dict
+        
+        +__init__(job_id: str, storage_dir: str = "data/batch/statistics")
+        +record_execution_start(execution_id: str, batch_type: str, purpose_id: str, expected_count: int): None
+        +update_execution_progress(execution_id: str, processed: int = 0, succeeded: int = 0, failed: int = 0): None
+        +record_execution_complete(execution_id: str, status: str): None
+        +get_job_statistics(): Dict
+        +get_purpose_statistics(purpose_id: str): Dict
+        -_load_stats(): None
+        -_save_stats(): None
+    }
+}
+
+namespace scheduler {
+    class BatchScheduler {
+        -_batch_processor: BatchProcessor
+        -_scheduler: AsyncIOScheduler
+        -_running: bool
+        -_logger: Logger
+        +__init__(batch_processor: BatchProcessor)
+        +start(): None
+        +stop(): None
+        +schedule_batch_job(batch_id: str, template_id: str, items: List[Dict], metadata: Dict, source: str, schedule: Dict): str
+        +cancel_job(job_id: str): bool
+        +list_jobs(): List[Dict]
+        -_run_batch_job(batch_id: str, template_id: str, items: List[Dict], metadata: Dict, source: str): None
+        +{async} initialize(): None
+    }
+}
+
+namespace infrastructure.services {
+    class DefaultOrchestrationService {
+        -_generative_client: GenerativeClient
+        -_analysis_client: AnalysisClient
+        -_communication_client: CommunicationClient
+        -_service_handlers: Dict
+        -_logger: Logger
+        +__init__()
+        +execute_template(template: ExecutionTemplate, context: Dict): Dict
+        -_handle_generative(template: ExecutionTemplate, context: Dict): Dict
+        -_handle_analysis(template: ExecutionTemplate, context: Dict): Dict
+        -_handle_communication(template: ExecutionTemplate, context: Dict): Dict
+        -_process_result(template: ExecutionTemplate, result: Dict): Dict
+        -_create_error_response(template: ExecutionTemplate, context: Dict, error: str): Dict
+    }
+    
+    class DefaultNLPService {
+        -_purpose_repository: IPurposeRepository
+        -_logger: Logger
+        +__init__(purpose_repository: IPurposeRepository)
+        +detect_purpose_with_confidence(text: str): Tuple[str, float]
+        +extract_keywords(text: str): List[str]
+        +classify_text(text: str, categories: List[str]): Dict[str, float]
+        -_keyword_matching_algorithm(text: str, purposes: List[Purpose]): Tuple[str, float]
+    }
+    
+    class DefaultContextService {
+        -_storage_dir: str
+        -_logger: Logger
+        +__init__(storage_dir: str)
+        +create_context(request: Request, template: ExecutionTemplate): Dict
+        +update_context(context_id: str, data: Dict): Dict
+        +get_context(context_id: str): Dict
+        +delete_context(context_id: str): bool
+        +create_batch_context(batch_id: str, metadata: Dict): Dict
+        +update_batch_context(batch_id: str, data: Dict): Dict
+        -_persist_context(context_id: str, context: Dict): bool
+        -_load_context(context_id: str): Dict
+    }
+    
+    class LoggingCommunicationService {
+        -_logger: Logger
+        +__init__()
+        +notify_completion(user_id: str, request_id: str, result: Dict): bool
+        +notify_error(user_id: str, request_id: str, error: Dict): bool
+        +send_message(user_id: str, message: str, metadata: Dict): bool
+    }
+    
+    class ConsultancyBotHandler {
+        -_request_service: IRequestService
+        -_logger: Logger
+        +__init__(request_service: IRequestService)
+        +handle_message(user_id: str, message: str, metadata: Dict): Dict
+        -_prepare_context(user_id: str, metadata: Dict): Dict
+        -_process_response(response: Dict): Dict
+    }
+}
+
+namespace infrastructure.clients {
+    class GenerativeClient {
+        -_base_url: str
+        -_api_key: str
+        -_logger: Logger
+        -_http_client: AsyncClient
+        +__init__(base_url: str, api_key: str)
+        +execute_template(template_id: str, service_template: Dict, context: Dict): Dict
+        +execute_function(function_name: str, parameters: Dict, context: Dict): Dict
+        +process_data(data: Dict, context: Dict): Dict
+        -_is_service_available(): bool
+        -_create_error_response(template_id: str, error_message: str): Dict
+        -_mock_execution(template_id: str, service_template: Dict, context: Dict): Dict
+        -_mock_function(function_name: str, parameters: Dict, context: Dict): Dict
+        -_mock_processing(data: Dict, context: Dict): Dict
+    }
+    
+    class AnalysisClient {
+        -_base_url: str
+        -_api_key: str
+        -_logger: Logger
+        -_http_client: AsyncClient
+        +__init__(base_url: str, api_key: str)
+        +execute_template(template_id: str, service_template: Dict, context: Dict): Dict
+        -_is_service_available(): bool
+        -_create_error_response(template_id: str, error_message: str): Dict
+        -_mock_execution(template_id: str, service_template: Dict, context: Dict): Dict
+    }
+    
+    class CommunicationClient {
+        -_base_url: str
+        -_api_key: str
+        -_logger: Logger
+        -_http_client: AsyncClient
+        +__init__(base_url: str, api_key: str)
+        +execute_template(template_id: str, service_template: Dict, context: Dict): Dict
+        -_is_service_available(): bool
+        -_create_error_response(template_id: str, error_message: str): Dict
+        -_mock_execution(template_id: str, service_template: Dict, context: Dict): Dict
+    }
+}
+
+namespace infrastructure.repositories {
+    class FileTemplateRepository {
+        -_template_dir: str
+        -_templates: Dict
+        -_logger: Logger
+        +__init__(template_dir: str = "data/templates")
+        -_load_templates(): None
+        +get_by_id(template_id: str): ExecutionTemplate
+        +list_by_service_type(service_type: ServiceType): List[ExecutionTemplate]
+        +save(template: ExecutionTemplate): bool
+        +add(template: ExecutionTemplate): bool
+        +list(): List[ExecutionTemplate]
+        +delete(template_id: str): bool
+    }
+    
+    class InMemoryRequestRepository {
+        -_requests: Dict
+        -_logger: Logger
+        +__init__()
+        +get_by_id(request_id: str): Request
+        +list_by_user(user_id: str): List[Request]
+        +list_by_status(status: str): List[Request]
+        +save(request: Request): bool
+        +add(request: Request): bool
+        +update_status(request_id: str, status: str): bool
+    }
+    
+    class FilePurposeRepository {
+        -_file_path: str
+        -_purposes: Dict
+        -_logger: Logger
+        +__init__(file_path: str = "data/purposes/purposes.json")
+        -_load_purposes(): None
+        +get_by_id(purpose_id: str): Purpose
+        +list(): List[Purpose]
+        +get_by_keywords(keywords: List[str]): List[Purpose]
+        +get_template_id_by_purpose(purpose_id: str): str
+    }
+}
+
+' Define relationships
+application.interfaces.IOrchestrationService <|.. infrastructure.services.DefaultOrchestrationService
+application.interfaces.INLPService <|.. infrastructure.services.DefaultNLPService
+application.interfaces.IContextService <|.. infrastructure.services.DefaultContextService
+application.interfaces.ICommunicationService <|.. infrastructure.services.LoggingCommunicationService
+
+domain.ITemplateRepository <|.. infrastructure.repositories.FileTemplateRepository
+domain.IRequestRepository <|.. infrastructure.repositories.InMemoryRequestRepository
+domain.IPurposeRepository <|.. infrastructure.repositories.FilePurposeRepository
+
+domain.ExecutionTemplate *-- domain.ServiceType
+application.services.BatchProcessor ..> application.interfaces.IRequestService : uses
+application.services.BatchProcessor ..> application.interfaces.IContextService : uses
+scheduler.BatchScheduler *-- application.services.BatchProcessor : uses
+
+infrastructure.services.DefaultOrchestrationService ..> domain.ExecutionTemplate : uses
+infrastructure.services.DefaultOrchestrationService *-- infrastructure.clients.GenerativeClient : uses
+infrastructure.services.DefaultOrchestrationService *-- infrastructure.clients.AnalysisClient : uses
+infrastructure.services.DefaultOrchestrationService *-- infrastructure.clients.CommunicationClient : uses
+
+infrastructure.services.DefaultNLPService ..> domain.Purpose : uses
+infrastructure.services.DefaultNLPService *-- domain.IPurposeRepository : uses
+
+infrastructure.repositories.FileTemplateRepository ..> domain.ExecutionTemplate : manages
+infrastructure.repositories.InMemoryRequestRepository ..> domain.Request : manages
+infrastructure.repositories.FilePurposeRepository ..> domain.Purpose : manages
+
+infrastructure.services.ConsultancyBotHandler ..> application.interfaces.IRequestService : uses
+
+application.interfaces.ITemplateService ..> domain.ExecutionTemplate : uses
+application.interfaces.IRequestService ..> application.interfaces.IOrchestrationService : uses
+application.interfaces.IRequestService ..> application.interfaces.ICommunicationService : uses
+
+@enduml 

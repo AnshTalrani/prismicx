@@ -1,0 +1,68 @@
+@startuml Template Purpose Alignment System
+
+title "Template-Purpose Alignment System Components"
+
+' Define the boundary
+package "Template-Purpose Alignment System" {
+    ' Core components
+    [Alignment API] as alignment_api
+    [Service Factory] as service_factory
+    [Application Service] as app_service
+    [Template Service] as template_service
+    [Notification Service] as notification_service
+    
+    ' Repositories 
+    [File Template Repository] as file_template_repo
+    [File Purpose Repository] as file_purpose_repo
+    
+    ' Testing components
+    [Unit Tests] as unit_tests
+    [Integration Tests] as integration_tests
+    [Functional Tests] as functional_tests
+    
+    ' Data stores
+    database "Template Store\n(JSON Files)" as template_store
+    database "Purpose Store\n(JSON Files)" as purpose_store
+    database "Notification Log\n(JSON/Text Files)" as notification_store
+}
+
+' Define external actors
+actor Administrator as admin
+
+' Define relationships
+admin --> alignment_api : Uses\nHTTP/REST
+alignment_api --> app_service : Uses
+alignment_api --> service_factory : Uses
+service_factory --> app_service : Creates
+service_factory --> file_template_repo : Creates
+service_factory --> file_purpose_repo : Creates
+service_factory --> notification_service : Creates
+app_service --> template_service : Uses
+app_service --> notification_service : Uses
+template_service --> file_template_repo : Uses
+template_service --> file_purpose_repo : Uses
+template_service --> notification_service : Uses
+file_template_repo --> template_store : Reads/Writes
+file_purpose_repo --> purpose_store : Reads/Writes
+notification_service --> notification_store : Writes
+
+' Test relationships
+unit_tests --> template_service : Tests
+unit_tests --> notification_service : Tests
+integration_tests --> app_service : Tests
+integration_tests --> file_template_repo : Tests
+integration_tests --> file_purpose_repo : Tests
+functional_tests --> alignment_api : Tests
+
+' Add legend
+legend
+  |= Component |= Description |
+  | Alignment API | FastAPI endpoints for alignment operations |
+  | Service Factory | Creates and initializes services |
+  | Application Service | Coordinates alignment checks |
+  | Template Service | Performs alignment detection |
+  | Notification Service | Handles alignment notifications |
+  | File Repositories | Store templates and purposes |
+endlegend
+
+@enduml 

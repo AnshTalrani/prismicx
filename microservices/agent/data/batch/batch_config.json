@@ -1,0 +1,109 @@
+{
+  "batch_processing_jobs": [
+    {
+      "job_id": "instagram_post_generation",
+      "type": "individual_batch",
+      "purpose_id": "instagram_generation",
+      "filters": {
+        "all_users": true
+      },
+      "schedule": {
+        "frequency": "weekly",
+        "day": "monday",
+        "time": "01:00"
+      },
+      "priority": "medium",
+      "retry_failed": true,
+      "max_retries": 3
+    },
+    {
+      "job_id": "instagram_post_preference_based",
+      "type": "individual_batch",
+      "purpose_id": "instagram_generation",
+      "preference_based": true,
+      "feature_type": "instagram_posts",
+      "priority": "high",
+      "retry_failed": true,
+      "max_retries": 3,
+      "default_preferences": {
+        "frequency": "weekly",
+        "preferred_day": "monday",
+        "preferred_time": "10:00",
+        "template_overrides": {
+          "tone": "casual",
+          "length": "medium"
+        }
+      }
+    },
+    {
+      "job_id": "etsy_analysis",
+      "type": "individual_batch",
+      "purpose_id": "etsy_description_analysis",
+      "filters": {
+        "min_likes": 1000
+      },
+      "schedule": {
+        "frequency": "weekly",
+        "day": "wednesday",
+        "time": "02:00"
+      },
+      "priority": "high"
+    },
+    {
+      "job_id": "etsy_analysis_preference_based",
+      "type": "individual_batch",
+      "purpose_id": "etsy_description_analysis",
+      "preference_based": true,
+      "feature_type": "etsy_analysis",
+      "priority": "high",
+      "retry_failed": true,
+      "max_retries": 2,
+      "default_preferences": {
+        "frequency": "weekly",
+        "preferred_day": "wednesday",
+        "preferred_time": "10:00",
+        "template_overrides": {
+          "focus_areas": ["pricing", "description"]
+        }
+      }
+    },
+    {
+      "job_id": "niche_trend_analysis",
+      "type": "batch_as_object",
+      "category_type": "niche",
+      "purpose_id": "trend_analysis",
+      "reference": "distribute_to_members",
+      "schedule": {
+        "frequency": "biweekly",
+        "time": "03:00"
+      }
+    },
+    {
+      "job_id": "audience_pain_points",
+      "type": "batch_as_object",
+      "category_type": "target_audience",
+      "purpose_id": "pain_point_analysis",
+      "reference": "distribute_to_members",
+      "schedule": {
+        "frequency": "monthly",
+        "day": "1",
+        "time": "04:00"
+      }
+    },
+    {
+      "job_id": "cross_audience_niche_analysis",
+      "type": "combination",
+      "categories": [
+        {"type": "target_audience", "all": true},
+        {"type": "niche", "all": true}
+      ],
+      "purpose_id": "cross_factor_analysis",
+      "reference": "matrix",
+      "schedule": {
+        "frequency": "monthly",
+        "day": "15",
+        "time": "05:00"
+      }
+    }
+  ]
+} 

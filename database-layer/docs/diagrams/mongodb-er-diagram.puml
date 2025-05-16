@@ -1,0 +1,122 @@
+@startuml MongoDB Database Schema
+
+' Setting diagram style
+!define COLLECTION_BORDER_COLOR #073B4C
+!define COLLECTION_HEADER_COLOR #06D6A0
+!define COLLECTION_ROW_COLOR #EFF2F1
+!define COLLECTION_TEXT_COLOR #000000
+!define RELATIONSHIP_COLOR #EF476F
+
+skinparam class {
+    BackgroundColor COLLECTION_ROW_COLOR
+    BorderColor COLLECTION_BORDER_COLOR
+    HeaderBackgroundColor COLLECTION_HEADER_COLOR
+    FontColor COLLECTION_TEXT_COLOR
+    ArrowColor RELATIONSHIP_COLOR
+}
+
+skinparam packageStyle rectangle
+hide circle
+hide empty methods
+hide empty fields
+
+package "Tenant Registry Database" {
+    class "tenants" as tenants {
+        + tenant_id: String <<PK>>
+        --
+        name: String
+        database_config: Object
+        database_config.type: String ['dedicated', 'shared']
+        database_config.connection_string: String
+        database_config.database_name: String
+        database_config.shard_key: String
+        created_at: Date
+        updated_at: Date
+        status: String ['active', 'inactive', 'suspended', 'provisioning']
+        settings: Object
+        tier: String
+        region: String
+    }
+
+    class "tenant_databases" as tenant_databases {
+        + database_name: String <<PK>>
+        --
+        type: String ['dedicated', 'shared']
+        tenants: Array[String]
+        status: String ['active', 'provisioning', 'decommissioning', 'archived']
+        created_at: Date
+        server: String
+        region: String
+    }
+}
+
+package "Task Repository Database" {
+    class "tasks" as tasks {
+        + task_id: String <<PK>>
+        --
+        tenant_id: String
+        service_id: String
+        type: String
+        status: String ['pending', 'running', 'completed', 'failed', 'cancelled']
+        priority: Number
+        payload: Object
+        result: Object
+        created_at: Date
+        updated_at: Date
+        started_at: Date
+        completed_at: Date
+        error: Object
+    }
+}
+
+package "Category Repository Database" {
+    class "categories" as categories {
+        + category_id: String <<PK>>
+        --
+        name: String
+        description: String
+        parent_id: String
+        tenant_id: String
+        attributes: Array[Object]
+        created_at: Date
+        updated_at: Date
+    }
+}
+
+package "User Insights Database (Per Tenant)" {
+    class "user_insights" as user_insights {
+        + user_id: String <<PK>>
+        --
+        tenant_id: String
+        topics: Array[Object]
+        topics.topic_id: String
+        topics.name: String
+        topics.description: String
+        topics.subtopics: Array[Object]
+        topics.subtopics.subtopic_id: String
+        topics.subtopics.name: String
+        topics.subtopics.content: Object
+        topics.subtopics.content.key_points: Array[String]
+        topics.subtopics.content.resources: Array[String]
+        topics.subtopics.created_at: Date
+        topics.subtopics.updated_at: Date
+        topics.created_at: Date
+        topics.updated_at: Date
+        metadata: Object
+        metadata.profile_completeness: Number
+        metadata.interest_score: Number
+        created_at: Date
+        updated_at: Date
+    }
+}
+
+' Relationships
+tenants -- tenant_databases : "registered in"
+tenants -- tasks : "owns"
+tenants -- categories : "owns"
+tenants -- user_insights : "owns"
+
+' Parent-child relationship
+categories -- categories : "parent-child"
+
+@enduml 

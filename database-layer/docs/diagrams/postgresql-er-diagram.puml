@@ -1,0 +1,197 @@
+@startuml PostgreSQL Database Schema
+
+' Setting diagram style
+!define TABLE_BORDER_COLOR #073B4C
+!define TABLE_HEADER_COLOR #118AB2
+!define TABLE_ROW_COLOR #EFF2F1
+!define TABLE_TEXT_COLOR #000000
+!define FOREIGN_KEY_COLOR #EF476F
+
+skinparam class {
+    BackgroundColor TABLE_ROW_COLOR
+    BorderColor TABLE_BORDER_COLOR
+    HeaderBackgroundColor TABLE_HEADER_COLOR
+    FontColor TABLE_TEXT_COLOR
+    ArrowColor FOREIGN_KEY_COLOR
+}
+
+skinparam packageStyle rectangle
+hide circle
+hide empty methods
+hide empty fields
+
+package "System Users Database" {
+    package "user_data Schema" {
+        class "users" as users {
+            + id: UUID <<PK>>
+            --
+            tenant_id: VARCHAR(50)
+            username: VARCHAR(100)
+            email: VARCHAR(255)
+            password_hash: VARCHAR(255)
+            first_name: VARCHAR(100)
+            last_name: VARCHAR(100)
+            role: VARCHAR(50)
+            status: VARCHAR(20)
+            created_at: TIMESTAMP
+            updated_at: TIMESTAMP
+            last_login_at: TIMESTAMP
+            metadata: JSONB
+        }
+    }
+
+    package "user_preferences Schema" {
+        class "preferences" as preferences {
+            + user_id: UUID <<PK, FK>>
+            + preference_key: VARCHAR(100) <<PK>>
+            --
+            preference_value: JSONB
+            created_at: TIMESTAMP
+            updated_at: TIMESTAMP
+        }
+    }
+
+    package "user_extensions Schema" {
+        class "extensions" as extensions {
+            + id: UUID <<PK>>
+            --
+            user_id: UUID <<FK>>
+            tenant_id: VARCHAR(50)
+            extension_type: VARCHAR(50)
+            name: VARCHAR(100)
+            description: TEXT
+            enabled: BOOLEAN
+            priority: INTEGER
+            created_at: TIMESTAMP
+            updated_at: TIMESTAMP
+            metadata: JSONB
+        }
+
+        class "extension_metrics" as extension_metrics {
+            + id: UUID <<PK>>
+            --
+            extension_id: UUID <<FK>>
+            usage_count: INTEGER
+            last_used_at: TIMESTAMP
+            feedback_score: FLOAT
+            created_at: TIMESTAMP
+            updated_at: TIMESTAMP
+        }
+
+        class "practicality_factors" as practicality_factors {
+            + id: UUID <<PK>>
+            --
+            extension_id: UUID <<FK>>
+            factor_name: VARCHAR(100)
+            factor_value: INTEGER
+            factor_weight: FLOAT
+            created_at: TIMESTAMP
+            updated_at: TIMESTAMP
+        }
+    }
+}
+
+package "Management System Repository Database" {
+    package "public Schema" {
+        class "management_systems" as management_systems {
+            + system_id: VARCHAR(50) <<PK>>
+            --
+            name: VARCHAR(100)
+            description: TEXT
+            type: VARCHAR(50)
+            vendor: VARCHAR(100)
+            status: VARCHAR(20)
+            created_at: TIMESTAMP
+            updated_at: TIMESTAMP
+            metadata: JSONB
+        }
+
+        class "system_versions" as system_versions {
+            + version_id: VARCHAR(50) <<PK>>
+            --
+            system_id: VARCHAR(50) <<FK>>
+            version: VARCHAR(20)
+            release_notes: TEXT
+            schema_version: INTEGER
+            is_latest: BOOLEAN
+            release_date: TIMESTAMP
+            created_at: TIMESTAMP
+            dependencies: JSONB
+            compatibility: JSONB
+        }
+
+        class "tenant_systems" as tenant_systems {
+            + tenant_id: VARCHAR(50) <<PK>>
+            + system_id: VARCHAR(50) <<PK, FK>>
+            --
+            version_id: VARCHAR(50) <<FK>>
+            status: VARCHAR(20)
+            installed_at: TIMESTAMP
+            updated_at: TIMESTAMP
+            configurations: JSONB
+            features_enabled: JSONB
+            error_message: TEXT
+        }
+
+        class "schema_migrations" as schema_migrations {
+            + migration_id: VARCHAR(50) <<PK>>
+            --
+            system_id: VARCHAR(50) <<FK>>
+            version_from: VARCHAR(20)
+            version_to: VARCHAR(20)
+            schema_version_from: INTEGER
+            schema_version_to: INTEGER
+            migration_sql: TEXT
+            rollback_sql: TEXT
+            description: TEXT
+            created_at: TIMESTAMP
+        }
+    }
+
+    package "Tenant-Specific Schemas" {
+        class "tenant_XXX_crm.customers" as tenant_crm_customers {
+            + id: UUID <<PK>>
+            --
+            tenant_id: VARCHAR(50)
+            name: VARCHAR(255)
+            email: VARCHAR(255)
+            phone: VARCHAR(50)
+            created_at: TIMESTAMP
+            updated_at: TIMESTAMP
+            metadata: JSONB
+        }
+
+        class "tenant_XXX_sales.products" as tenant_sales_products {
+            + id: UUID <<PK>>
+            --
+            tenant_id: VARCHAR(50)
+            name: VARCHAR(255)
+            price: DECIMAL
+            description: TEXT
+            created_at: TIMESTAMP
+            updated_at: TIMESTAMP
+            metadata: JSONB
+        }
+    }
+}
+
+' Relationships
+
+' User relationships
+users <-- preferences
+users <-- extensions
+
+' Extension relationships
+extensions <-- extension_metrics
+extensions <-- practicality_factors
+
+' Management System relationships
+management_systems <-- system_versions
+management_systems <-- tenant_systems
+management_systems <-- schema_migrations
+system_versions <-- tenant_systems
+
+' Note: Tenant-specific schemas are dynamically created, so their relationships
+' are not explicitly modeled in this diagram
+
+@enduml 

@@ -1,0 +1,106 @@
+{
+  "id": "instagram_post_campaign",
+  "version": "1.0",
+  "description": "Manages Instagram post campaign for product promotion",
+  "service_type": "COMMUNICATION",
+  "processing_mode": "batch",
+  "communication_template": {
+    "purpose": "Promote new product line",
+    "target_audience": {
+      "demographics": {
+        "age": "18-35",
+        "gender": "all",
+        "location": "global",
+        "interests": ["fashion", "lifestyle", "technology"]
+      },
+      "pain_points": [
+        "time management", 
+        "organization", 
+        "productivity",
+        "self-expression"
+      ],
+      "decision_factors": [
+        "price", 
+        "quality", 
+        "uniqueness", 
+        "social proof"
+      ]
+    },
+    "product_info": {
+      "name": "Product Line X",
+      "key_features": [
+        "eco-friendly materials",
+        "customizable options",
+        "affordable pricing",
+        "innovative design"
+      ],
+      "pricing_tiers": [
+        "basic", 
+        "premium", 
+        "exclusive"
+      ],
+      "unique_selling_points": [
+        "industry-first technology",
+        "sustainable manufacturing",
+        "lifestyle integration",
+        "customer-driven design"
+      ]
+    },
+    "stages": {
+      "awareness": {
+        "goal": "Introduce product to target audience",
+        "content_type": ["image_post", "story", "reel"],
+        "metrics": {
+          "reach": 10000,
+          "impressions": 20000
+        }
+      },
+      "consideration": {
+        "goal": "Highlight benefits and use cases",
+        "content_type": ["carousel", "reel", "tutorial"],
+        "metrics": {
+          "engagement": 5,
+          "click_through": 3
+        }
+      },
+      "conversion": {
+        "goal": "Drive purchases and sign-ups",
+        "content_type": ["product_showcase", "promotion", "testimonial"],
+        "metrics": {
+          "conversion": 2,
+          "sales": 500
+        }
+      },
+      "loyalty": {
+        "goal": "Encourage repeat purchases and advocacy",
+        "content_type": ["user_generated", "community_spotlight", "exclusive_content"],
+        "metrics": {
+          "retention": 70,
+          "referrals": 100
+        }
+      }
+    },
+    "notes": {
+      "awareness": [
+        "Focus on visual appeal and brand identity",
+        "Emphasize innovation aspects"
+      ],
+      "consideration": [
+        "Include testimonials from beta users",
+        "Demonstrate product in action"
+      ],
+      "conversion": [
+        "Highlight limited-time offers",
+        "Create sense of urgency"
+      ],
+      "loyalty": [
+        "Feature customer success stories",
+        "Offer exclusive content for existing customers"
+      ]
+    },
+    "channel": "instagram"
+  },
+  "created_by": "system",
+  "created_at": "2024-01-01T00:00:00Z",
+  "updated_at": "2024-01-01T00:00:00Z"
+} 

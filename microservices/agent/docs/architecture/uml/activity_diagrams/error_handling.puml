@@ -1,0 +1,137 @@
+#yet to be verified 
+
+@startuml Error Handling Workflow
+
+' Style
+skinparam activity {
+    BackgroundColor LightBlue
+    BorderColor DarkBlue
+    ArrowColor DarkBlue
+}
+
+' Title
+title Agent Microservice - Error Handling Workflow
+
+' Start
+start
+
+' Error Detection
+:Detect error;
+if (Error type?) then (Validation Error)
+    :Log validation error;
+    :Update request status to FAILED;
+    :Send validation error response;
+    stop
+else if (Service Error) then
+    :Log service error;
+    :Check retry policy;
+    if (Retry allowed?) then (yes)
+        :Increment retry count;
+        :Wait for backoff period;
+        :Retry operation;
+        if (Retry successful?) then (yes)
+            :Continue processing;
+        else (no)
+            :Handle retry failure;
+        endif
+    else (no)
+        :Handle service error;
+    endif
+else if (System Error) then
+    :Log system error;
+    :Trigger system alert;
+    :Attempt graceful degradation;
+    if (Degradation successful?) then (yes)
+        :Continue with degraded service;
+    else (no)
+        :Initiate emergency shutdown;
+    endif
+else if (External Service Error) then
+    :Log external service error;
+    :Check service health;
+    if (Service available?) then (yes)
+        :Retry with circuit breaker;
+    else (no)
+        :Switch to fallback service;
+    endif
+endif
+
+' Error Classification
+:Classify error severity;
+switch (Severity)
+case (Critical)
+    :Trigger critical alert;
+    :Notify on-call team;
+    :Initiate incident response;
+case (High)
+    :Trigger high priority alert;
+    :Notify development team;
+    :Schedule investigation;
+case (Medium)
+    :Log error details;
+    :Update monitoring;
+    :Schedule review;
+case (Low)
+    :Log error details;
+    :Update metrics;
+endswitch
+
+' Recovery Actions
+:Determine recovery actions;
+fork
+    :Update request status;
+fork again
+    :Update system state;
+fork again
+    :Send notifications;
+end fork
+
+' Documentation
+:Document error details;
+:Update error tracking;
+:Generate error report;
+
+' Post-Mortem
+if (Requires post-mortem?) then (yes)
+    :Schedule post-mortem;
+    :Gather incident data;
+    :Analyze root cause;
+    :Create action items;
+    :Update runbooks;
+endif
+
+' Monitoring
+:Update monitoring metrics;
+:Check system health;
+if (System healthy?) then (yes)
+    :Resume normal operations;
+else (no)
+    :Continue monitoring;
+endif
+
+stop
+
+' Notes
+note right of :Detect error;
+  System detects various
+  types of errors during
+  request processing
+end note
+
+note right of :Classify error severity;
+  Errors are classified
+  based on impact and
+  business criticality
+end note
+
+note right of :Recovery actions;
+  Multiple recovery actions
+  may be executed in parallel
+end note
+
+note right of :Post-Mortem;
+  Critical errors trigger
+  post-mortem analysis
+end note
+
+@enduml 

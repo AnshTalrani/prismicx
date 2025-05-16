@@ -1,0 +1,23 @@
+experts:
+  c1:
+    bot: "instagram_bot"
+    adapter: "instagram_adapter"
+    llm_generation_params:
+      temperature: 0.8
+      max_length: 150
+    retrieval_config:
+      method: "dense"
+      top_k: 5
+    fusion_config:
+      strategy: "RAG-Sequence"
+  # You can add additional expert configurations here
+  # c2:
+  #   bot: "twitter_bot"
+  #   llm_generation_params:
+  #     temperature: 0.7
+  #     max_length: 120
+  #   retrieval_config:
+  #     method: "sparse"
+  #     top_k: 3
+  #   fusion_config:
+  #     strategy: "RAG-Token" 
