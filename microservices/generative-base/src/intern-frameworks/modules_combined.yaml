@@ -1,0 +1,638 @@
+# modules_combined.yaml
+# Comprehensive definition of all AI processing modules
+# AI interns should modify this file to change module behavior, prompts, and parameters
+
+# -------------------------------------------------------------------
+# INPUT PREPROCESSING MODULE
+# -------------------------------------------------------------------
+input_preprocessing:
+  id: "input_preprocessing"
+  name: "Input Preprocessing"
+  description: "Cleans and normalizes input data before processing"
+  version: "1.0.0"
+  
+  behavior:
+    input_types:
+      - "text"
+      - "html"
+      - "markdown"
+      - "json"
+      - "csv"
+    
+    output_type: "normalized_text"
+    
+    ai_models:
+      primary:
+        type: "openai"
+        model: "gpt-3.5-turbo"
+        temperature: 0.1
+        max_tokens: 1000
+    
+    config:
+      remove_html: true
+      normalize_whitespace: true
+      fix_encoding_issues: true
+      extract_main_content: true
+      language_detection: true
+      language_translation: false
+      target_language: "en"
+    
+    prompts:
+      main_processing: |
+        Clean and normalize the following content, preserving the most important information:
+        
+        CONTENT:
+        {{content}}
+        
+        OUTPUT FORMAT: Plain text with normalized formatting and spacing.
+
+# -------------------------------------------------------------------
+# DEEP INPUT FUSION MODULE
+# -------------------------------------------------------------------
+deep_input_fusion:
+  id: "deep_input_fusion"
+  name: "Deep Input Fusion"
+  description: "Combines multiple input sources into a coherent context"
+  version: "1.0.0"
+  
+  behavior:
+    input_types:
+      - "text"
+      - "structured_data"
+      - "url_content"
+      - "document_content"
+    
+    output_type: "unified_context"
+    
+    ai_models:
+      primary:
+        type: "openai"
+        model: "gpt-4"
+        temperature: 0.3
+        max_tokens: 2000
+      fallback:
+        type: "anthropic"
+        model: "claude-2"
+        temperature: 0.4
+    
+    config:
+      weighting_strategy: "relevance_based"  # Options: relevance_based, recency_based, authority_based
+      fusion_depth: "semantic"  # Options: semantic, syntactic, hybrid
+      context_window: 16000
+      deduplication: true
+      conflict_resolution: "most_credible"  # Options: most_credible, most_recent, synthesize
+      preserve_source_attributes: true
+      
+    prompts:
+      main_fusion: |
+        Analyze the following inputs and combine them into a coherent context:
+        
+        {{#each inputs}}
+        SOURCE ({{type}}): {{content}}
+        {{/each}}
+        
+        Create a unified context that maintains all relevant information.
+      
+      conflict_resolution: |
+        The following information appears to conflict:
+        
+        ITEM A: {{conflict_a}}
+        
+        ITEM B: {{conflict_b}}
+        
+        Resolve this conflict based on credibility, recency, and specificity.
+
+# -------------------------------------------------------------------
+# CONTENT EXTRACTION MODULE
+# -------------------------------------------------------------------
+content_extraction:
+  id: "content_extraction"
+  name: "Content Extraction"
+  description: "Extracts structured data from unstructured inputs"
+  version: "1.0.0"
+  
+  behavior:
+    input_types:
+      - "text"
+      - "html"
+      - "pdf_text"
+    
+    output_type: "structured_data"
+    
+    ai_models:
+      primary:
+        type: "openai"
+        model: "gpt-4"
+        temperature: 0.1
+        max_tokens: 2000
+    
+    config:
+      extraction_schemas:
+        - id: "person"
+          fields:
+            - name: "name"
+              type: "string"
+              required: true
+            - name: "title"
+              type: "string"
+              required: false
+            - name: "organization"
+              type: "string"
+              required: false
+            - name: "contact_info"
+              type: "object"
+              required: false
+        
+        - id: "product"
+          fields:
+            - name: "name"
+              type: "string"
+              required: true
+            - name: "description"
+              type: "string"
+              required: false
+            - name: "price"
+              type: "number"
+              required: false
+            - name: "features"
+              type: "array"
+              required: false
+      
+      extraction_depth: "standard"  # Options: basic, standard, detailed
+      output_format: "json"  # Options: json, yaml, xml
+      include_confidence_scores: true
+      minimum_confidence: 0.7
+    
+    prompts:
+      extraction: |
+        Extract the following information from the text:
+        
+        TEXT:
+        {{input_text}}
+        
+        SCHEMA:
+        {{schema}}
+        
+        Extract all relevant information according to the schema. Return the data in {{output_format}} format.
+      
+      verification: |
+        Verify the extracted information:
+        
+        EXTRACTED DATA:
+        {{extracted_data}}
+        
+        ORIGINAL TEXT:
+        {{input_text}}
+        
+        Verify that all extracted information is accurate and complete. Assign confidence scores to each field.
+
+# -------------------------------------------------------------------
+# CONTEXT EXPANSION MODULE
+# -------------------------------------------------------------------
+context_expansion:
+  id: "context_expansion"
+  name: "Context Expansion"
+  description: "Expands input context with relevant information"
+  version: "1.0.0"
+  
+  behavior:
+    input_types:
+      - "unified_context"
+      - "normalized_text"
+    
+    output_type: "expanded_context"
+    
+    ai_models:
+      primary:
+        type: "openai"
+        model: "gpt-4"
+        temperature: 0.4
+        max_tokens: 3000
+    
+    config:
+      expansion_methods:
+        - "background_information"
+        - "related_concepts"
+        - "definitions"
+        - "examples"
+      knowledge_cutoff_date: "2023-04-01"
+      expansion_factor: 1.5  # How much to expand the original content
+      expansion_focus: "depth"  # Options: depth, breadth, balanced
+      preserve_original_structure: true
+      citation_inclusion: false
+    
+    prompts:
+      expansion: |
+        Expand the following content with relevant additional information:
+        
+        ORIGINAL CONTENT:
+        {{content}}
+        
+        EXPANSION FOCUS: {{expansion_focus}}
+        
+        Enhance this content by adding {{expansion_methods}}.
+        Maintain a natural flow and ensure all added information is directly relevant.
+
+# -------------------------------------------------------------------
+# HIGH QUALITY OUTPUT MODULE
+# -------------------------------------------------------------------
+high_quality_output:
+  id: "high_quality_output"
+  name: "High Quality Output Generator"
+  description: "Generates polished, high-quality content from processed inputs"
+  version: "1.0.0"
+  
+  behavior:
+    input_types:
+      - "unified_context"
+      - "expanded_context"
+    
+    output_type: "formatted_content"
+    
+    ai_models:
+      primary:
+        type: "openai"
+        model: "gpt-4"
+        temperature: 0.7
+        max_tokens: 4000
+      creative:
+        type: "anthropic"
+        model: "claude-2"
+        temperature: 0.8
+        max_tokens: 4000
+    
+    config:
+      output_formats:
+        - "markdown"
+        - "html"
+        - "plain_text"
+      quality_dimensions:
+        - "clarity"
+        - "coherence"
+        - "engagement"
+        - "authority"
+        - "correctness"
+      tone_options:
+        - "professional"
+        - "conversational"
+        - "academic"
+        - "persuasive"
+        - "informative"
+        - "enthusiastic"
+      style_options:
+        - "concise"
+        - "descriptive"
+        - "analytical"
+        - "narrative"
+      default_tone: "professional"
+      default_style: "analytical"
+      content_structuring: true
+      headings_inclusion: true
+    
+    prompts:
+      generation: |
+        Based on the following context, generate {{format}} content that is {{tone}} in tone and {{style}} in style.
+        
+        CONTEXT:
+        {{context}}
+        
+        GENERATION PARAMETERS:
+        Length: {{parameters.length}}
+        Focus: {{parameters.focus}}
+        Include: {{parameters.include}}
+        Target audience: {{parameters.target_audience}}
+        
+        Your output should be well-structured, engaging, and of the highest quality.
+      
+      refinement: |
+        Review and improve the following content:
+        
+        CONTENT:
+        {{content}}
+        
+        Enhance this content in terms of:
+        {{#each quality_dimensions}}
+        - {{this}}
+        {{/each}}
+        
+        Maintain the original {{tone}} tone and {{style}} style while making these improvements.
+
+# -------------------------------------------------------------------
+# FACT VERIFICATION MODULE
+# -------------------------------------------------------------------
+fact_verification:
+  id: "fact_verification"
+  name: "Fact Verification"
+  description: "Verifies factual accuracy of generated content"
+  version: "1.0.0"
+  
+  behavior:
+    input_types:
+      - "formatted_content"
+      - "expanded_context"
+    
+    output_type: "verified_content"
+    
+    ai_models:
+      primary:
+        type: "openai"
+        model: "gpt-4"
+        temperature: 0.1
+        max_tokens: 2000
+    
+    config:
+      verification_level: "standard"  # Options: basic, standard, rigorous
+      verification_sources:
+        - "input_context"
+        - "knowledge_base"
+        - "logical_inference"
+      flag_uncertain_statements: true
+      correction_strategy: "modify"  # Options: flag, modify, remove
+      confidence_threshold: 0.8
+      include_verification_notes: false
+    
+    prompts:
+      verification: |
+        Verify the factual accuracy of the following content:
+        
+        CONTENT:
+        {{content}}
+        
+        ORIGINAL CONTEXT:
+        {{context}}
+        
+        Identify any factual inaccuracies, unsupported claims, or logical inconsistencies.
+        For each issue found, provide a correction based on the original context.
+      
+      correction: |
+        The following statements require verification:
+        
+        {{#each flagged_statements}}
+        STATEMENT: {{text}}
+        ISSUE: {{issue}}
+        {{/each}}
+        
+        Provide corrected versions of these statements that maintain factual accuracy
+        while preserving the overall flow and tone of the content.
+
+# -------------------------------------------------------------------
+# TONE ADJUSTMENT MODULE
+# -------------------------------------------------------------------
+tone_adjustment:
+  id: "tone_adjustment"
+  name: "Tone Adjustment"
+  description: "Adjusts the tone of generated content"
+  version: "1.0.0"
+  
+  behavior:
+    input_types:
+      - "formatted_content"
+      - "verified_content"
+    
+    output_type: "tone_adjusted_content"
+    
+    ai_models:
+      primary:
+        type: "openai"
+        model: "gpt-4"
+        temperature: 0.6
+        max_tokens: 3000
+    
+    config:
+      available_tones:
+        - "professional"
+        - "conversational"
+        - "academic"
+        - "persuasive"
+        - "enthusiastic"
+        - "empathetic"
+        - "authoritative"
+        - "friendly"
+      default_tone: "professional"
+      preserve_meaning: true
+      preserve_structure: true
+      adjust_vocabulary: true
+      adjust_sentence_structure: true
+    
+    prompts:
+      adjustment: |
+        Rewrite the following content to have a {{target_tone}} tone while preserving the original meaning and structure:
+        
+        CONTENT:
+        {{content}}
+        
+        CURRENT TONE: {{current_tone}}
+        TARGET TONE: {{target_tone}}
+        
+        Adjust vocabulary, sentence structure, and expression to achieve the target tone.
+
+# -------------------------------------------------------------------
+# CONTENT EXPANSION MODULE
+# -------------------------------------------------------------------
+content_expansion:
+  id: "content_expansion"
+  name: "Content Expansion"
+  description: "Expands generated content with additional details"
+  version: "1.0.0"
+  
+  behavior:
+    input_types:
+      - "formatted_content"
+      - "verified_content"
+    
+    output_type: "expanded_content"
+    
+    ai_models:
+      primary:
+        type: "openai"
+        model: "gpt-4"
+        temperature: 0.7
+        max_tokens: 4000
+    
+    config:
+      expansion_techniques:
+        - "examples"
+        - "details"
+        - "explanations"
+        - "data_points"
+        - "quotes"
+      expansion_factor: 2.0  # How much to expand the original content
+      sections_to_expand: "all"  # Options: all, introduction, body, conclusion, auto
+      maintain_style: true
+      maintain_tone: true
+      expansion_markers: false  # Whether to mark expanded content
+    
+    prompts:
+      expansion: |
+        Expand the following content by adding more {{expansion_techniques}}:
+        
+        CONTENT:
+        {{content}}
+        
+        EXPANSION FACTOR: {{expansion_factor}}
+        SECTIONS TO EXPAND: {{sections_to_expand}}
+        
+        Maintain the original style and tone while adding rich, valuable details.
+
+# -------------------------------------------------------------------
+# SUMMARIZATION MODULE
+# -------------------------------------------------------------------
+summarization:
+  id: "summarization"
+  name: "Summarization"
+  description: "Creates concise summaries of longer content"
+  version: "1.0.0"
+  
+  behavior:
+    input_types:
+      - "formatted_content"
+      - "verified_content"
+      - "expanded_content"
+    
+    output_type: "summarized_content"
+    
+    ai_models:
+      primary:
+        type: "openai"
+        model: "gpt-4"
+        temperature: 0.3
+        max_tokens: 2000
+    
+    config:
+      summary_types:
+        - "executive"
+        - "bullet_points"
+        - "narrative"
+        - "tldr"
+      summary_lengths:
+        - "very_brief"  # ~10% of original
+        - "brief"       # ~25% of original
+        - "standard"    # ~50% of original
+        - "detailed"    # ~75% of original
+      default_type: "executive"
+      default_length: "standard"
+      preserve_key_points: true
+      include_original_headings: false
+      hierarchical_summarization: false  # Whether to summarize sections individually
+    
+    prompts:
+      summarization: |
+        Create a {{summary_type}} summary of the following content at a {{summary_length}} length:
+        
+        CONTENT:
+        {{content}}
+        
+        Your summary should capture the most important points while maintaining accuracy and coherence.
+
+# -------------------------------------------------------------------
+# FORMAT CONVERSION MODULE
+# -------------------------------------------------------------------
+format_conversion:
+  id: "format_conversion"
+  name: "Format Conversion"
+  description: "Converts content between different formats"
+  version: "1.0.0"
+  
+  behavior:
+    input_types:
+      - "formatted_content"
+      - "verified_content"
+      - "expanded_content"
+      - "summarized_content"
+    
+    output_type: "converted_content"
+    
+    ai_models:
+      primary:
+        type: "openai"
+        model: "gpt-3.5-turbo"
+        temperature: 0.2
+        max_tokens: 3000
+    
+    config:
+      supported_formats:
+        - "markdown"
+        - "html"
+        - "plain_text"
+        - "json"
+        - "csv"
+        - "yaml"
+        - "xml"
+        - "latex"
+      preserve_structure: true
+      preserve_styling: true
+      include_metadata: false
+      optimization_target: "readability"  # Options: readability, seo, accessibility
+    
+    prompts:
+      conversion: |
+        Convert the following content from {{source_format}} to {{target_format}}:
+        
+        CONTENT:
+        {{content}}
+        
+        Ensure the converted output maintains the original structure and styling as appropriate for the target format.
+
+# -------------------------------------------------------------------
+# QUALITY ASSURANCE MODULE
+# -------------------------------------------------------------------
+quality_assurance:
+  id: "quality_assurance"
+  name: "Quality Assurance"
+  description: "Performs final quality checks on generated content"
+  version: "1.0.0"
+  
+  behavior:
+    input_types:
+      - "formatted_content"
+      - "verified_content"
+      - "expanded_content"
+      - "summarized_content"
+      - "converted_content"
+    
+    output_type: "finalized_content"
+    
+    ai_models:
+      primary:
+        type: "openai"
+        model: "gpt-4"
+        temperature: 0.2
+        max_tokens: 3000
+    
+    config:
+      quality_dimensions:
+        - "spelling_grammar"
+        - "readability"
+        - "coherence"
+        - "factual_accuracy"
+        - "tone_consistency"
+        - "format_correctness"
+      correction_enabled: true
+      provide_improvement_notes: true
+      readability_target: "general"  # Options: simple, general, advanced
+      minimum_quality_score: 0.8  # 0.0 to 1.0
+    
+    prompts:
+      assessment: |
+        Assess the quality of the following content across these dimensions:
+        {{#each quality_dimensions}}
+        - {{this}}
+        {{/each}}
+        
+        CONTENT:
+        {{content}}
+        
+        For each dimension, provide a score from 0.0 to 1.0 and specific feedback on issues found.
+      
+      correction: |
+        Improve the following content by addressing these quality issues:
+        
+        CONTENT:
+        {{content}}
+        
+        ISSUES:
+        {{#each issues}}
+        - {{dimension}}: {{description}}
+        {{/each}}
+        
+        Make the necessary corrections while preserving the original meaning, tone, and style. 

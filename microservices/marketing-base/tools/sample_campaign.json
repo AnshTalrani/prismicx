@@ -1,0 +1,24 @@
+{
+  "id": "camp-2023-11-holiday-promo",
+  "name": "Holiday 2023 Promotion",
+  "description": "Special holiday promotion for premium customers with personalized offers based on interests",
+  "subject": "Exclusive Holiday Offers Just For You, {{first_name}}!",
+  "from_email": "marketing@example.com",
+  "reply_to": "support@example.com",
+  "template_id": "tmpl-holiday-2023",
+  "template_html": "<html><body><h1>Hello {{first_name}},</h1><p>We've curated special holiday deals just for you based on your interests in {{custom_attributes.interests.0}} and {{custom_attributes.interests.1}}.</p><p>As a valued premium member since {{custom_attributes.membership_since}}, you get an additional 15% off with code: <strong>HOLIDAY2023</strong></p><p>Click <a href='https://example.com/offers/{{tracking_id}}'>here</a> to view your personalized offers.</p><p>Happy Holidays!<br>The Marketing Team</p></body></html>",
+  "template_text": "Hello {{first_name}},\n\nWe've curated special holiday deals just for you based on your interests in {{custom_attributes.interests.0}} and {{custom_attributes.interests.1}}.\n\nAs a valued premium member since {{custom_attributes.membership_since}}, you get an additional 15% off with code: HOLIDAY2023\n\nVisit: https://example.com/offers/{{tracking_id}} to view your personalized offers.\n\nHappy Holidays!\nThe Marketing Team",
+  "created_at": "2023-11-10T09:00:00Z",
+  "scheduled_at": "2023-11-15T08:00:00Z",
+  "status": "SCHEDULED",
+  "tags": ["holiday", "promotion", "premium", "2023"],
+  "track_opens": true,
+  "track_clicks": true,
+  "custom_attributes": {
+    "campaign_owner": "Jane Smith",
+    "department": "Product Marketing",
+    "expected_roi": "25%",
+    "priority": "high",
+    "ab_test": false
+  }
+} 

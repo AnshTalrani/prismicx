@@ -1,0 +1,139 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:6.0
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+    networks:
+      - generative-network
+      - database-layer-network
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mongo-express
+    restart: always
+    ports:
+      - "8081:8081"
+    environment:
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=admin
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=password
+      - ME_CONFIG_MONGODB_URL=mongodb://admin:password@mongodb:27017/
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - generative-network
+
+  postgres-service:
+    image: postgres:15
+    container_name: postgres-service
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=generative
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - generative-network
+      - database-layer-network
+
+  task-repo-service:
+    image: task-repo-service:latest
+    build:
+      context: ../../database-layer/task-repo-service
+      dockerfile: Dockerfile
+    container_name: task-repo-service
+    restart: always
+    ports:
+      - "8001:8000"
+    environment:
+      - TASK_REPO_MONGODB_URI=mongodb://admin:password@mongodb:27017
+      - TASK_REPO_DATABASE_NAME=task_repository
+      - TASK_REPO_LOG_LEVEL=DEBUG
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - generative-network
+      - database-layer-network
+
+  generative-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: generative-service
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      # Service identification
+      - GENERATIVE_SERVICE_TYPE=default
+      - GENERATIVE_SERVICE_NAME=generative-base
+      
+      # PostgreSQL settings
+      - GENERATIVE_POSTGRES_URI=postgresql://postgres:postgres@postgres-service:5432/generative
+      - GENERATIVE_POSTGRES_DATABASE=generative
+      
+      # Task Repository settings
+      - GENERATIVE_TASK_REPO_URL=http://task-repo-service:8000
+      - GENERATIVE_USE_TASK_REPO=true
+      
+      # Worker settings
+      - GENERATIVE_MAX_PROCESSING_ATTEMPTS=3
+      - GENERATIVE_RETRY_DELAY=60
+      - GENERATIVE_POLL_INTERVAL=1.0
+      
+      # Batch processing settings
+      - GENERATIVE_BATCH_PROCESSING_ENABLED=true
+      - GENERATIVE_BATCH_SIZE=10
+      - GENERATIVE_BATCH_WAIT_TIME=5
+      
+      # API settings  
+      - GENERATIVE_HOST=0.0.0.0
+      - GENERATIVE_PORT=8000
+      - GENERATIVE_DEBUG=true
+      
+      # Logging settings
+      - GENERATIVE_LOG_LEVEL=DEBUG
+    depends_on:
+      postgres-service:
+        condition: service_healthy
+      task-repo-service:
+        condition: service_started
+    volumes:
+      - ./src:/app/src
+    networks:
+      - generative-network
+      - database-layer-network
+
+volumes:
+  mongodb_data:
+  postgres_data:
+
+networks:
+  generative-network:
+    driver: bridge
+  database-layer-network:
+    driver: bridge

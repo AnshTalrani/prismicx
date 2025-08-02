@@ -1,0 +1,467 @@
+@startuml Batch Processing Flow
+
+' Style settings
+skinparam backgroundColor white
+skinparam handwritten false
+skinparam monochrome false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam sequence {
+    ArrowColor #2C3E50
+    LifeLineBackgroundColor #ECF0F1
+    LifeLineBorderColor #7F8C8D
+    ParticipantBackgroundColor #3498DB
+    ParticipantBorderColor #2980B9
+}
+
+' Define participants
+actor Client
+participant "API Gateway" as API
+participant "RequestController" as Controller
+participant "BatchScheduler" as Scheduler
+participant "BatchProcessor" as Processor
+participant "JobStatistics" as Stats
+participant "RequestService" as ReqService
+participant "TemplateService" as TempService
+participant "CategoryRepository" as CatRepo
+participant "DefaultContextService" as ContextService
+participant "DefaultOrchestrationService" as Orchestration
+participant "ServiceClient\n(Gen/Ana/Comm)" as ServiceClient
+participant "External Service" as ExtService
+database "Storage" as Storage
+
+' Define sequence
+title Batch Processing Flow with Enhanced Statistics Tracking
+
+Client -> API: Submit batch or schedule job
+activate API
+
+API -> Controller: POST /api/v1/batch/process
+activate Controller
+
+' Choice between immediate or scheduled processing
+alt Scheduled Job
+    note right
+      Job Config includes:
+      - job_name
+      - batch_type
+      - category
+      - template_id
+      - frequency
+      - priority
+      - filters
+      - distribution config
+    end note
+    
+    Controller -> Scheduler: schedule_job(job_config)
+    activate Scheduler
+    
+    Scheduler -> Scheduler: Create job with schedule based on frequency
+    note right
+      Frequency options:
+      - daily (at specific time)
+      - weekly (on specific day)
+      - monthly (on specific date)
+      - biweekly
+      - hourly
+    end note
+    
+    Controller <-- Scheduler: job_id
+    
+    ' Scheduler runs job at scheduled time
+    Scheduler -> Scheduler: Time trigger based on cron expression
+    Scheduler -> Processor: process_job(job_config)
+    
+    deactivate Scheduler
+else Immediate Processing
+    ' Handle different batch types based on job config
+    alt Individual Type
+        Controller -> Processor: process_batch(BatchType.INDIVIDUAL, items, template)
+    else Object Type
+        Controller -> Processor: process_batch(BatchType.BATCH_AS_OBJECT, items, template)
+    else Combined Type 
+        Controller -> Processor: process_batch(BatchType.COMBINED, items, template)
+    end
+end
+
+activate Processor
+
+' Generate batch_id and create batch context
+Processor -> Processor: generate_batch_id()
+Processor -> ContextService: create_batch_context(batch_id, job_config, metadata)
+activate ContextService
+ContextService -> Storage: _persist_context(batch_id, context)
+ContextService <-- Storage: context stored
+Processor <-- ContextService: batch_context
+deactivate ContextService
+
+' Get template once for all items
+Processor -> TempService: get_template(job_config.template_id)
+activate TempService
+TempService -> Storage: load_template
+TempService <-- Storage: template data
+Processor <-- TempService: execution_template
+deactivate TempService
+
+' Add job statistics initialization
+Processor -> Processor: _get_job_statistics(job_id)
+Processor -> Stats: record_execution_start(batch_id, batch_type, purpose_id, expected_count)
+activate Stats
+Stats -> Storage: _save_stats()
+Stats <-- Storage: stats stored
+Processor <-- Stats: job statistics initialized
+deactivate Stats
+
+' Apply job priority to processing
+Processor -> Processor: apply_job_priority(job_config.priority)
+note right
+  Priority levels:
+  - HIGH: Process immediately
+  - MEDIUM: Process after high priority
+  - LOW: Process when resources available
+end note
+
+' Process based on batch type
+alt Individual Batch
+    ' Get users based on job config filters (using _get_users_by_filters)
+    Processor -> Processor: _get_users_by_filters(job_config.filters)
+    
+    ' Use DEFAULT_BATCH_SIZE
+    note right
+      Split users into batches of DEFAULT_BATCH_SIZE = 100
+    end note
+    
+    Processor -> ContextService: update_batch_context(batch_id, {progress, status})
+    activate ContextService
+    ContextService -> Storage: _persist_context(batch_id, context)
+    ContextService <-- Storage: context updated
+    Processor <-- ContextService: updated context
+    deactivate ContextService
+    
+    Processor -> Processor: _process_individual_items(batch_id, items, template)
+    
+    loop for each item chunk (max_concurrent_items)
+        loop for each item in chunk
+            ' Create request from item
+            Processor -> Processor: _create_request_from_item(item, batch_id)
+            
+            ' Process request in parallel with job metadata
+            Processor -> Processor: _process_item(batch_id, request, template, job_config)
+            
+            Processor -> ReqService: process_request(request, template)
+            activate ReqService
+            
+            ' Create context for item with job reference
+            ReqService -> ContextService: create_context(request, template, {job_name: job_config.job_name})
+            activate ContextService
+            ContextService -> Storage: _persist_context(context_id, context)
+            ContextService <-- Storage: context stored
+            ReqService <-- ContextService: context
+            deactivate ContextService
+            
+            ' Execute template for item
+            ReqService -> Orchestration: execute_template(template, context)
+            activate Orchestration
+            
+            ' Validate and prepare for execution
+            Orchestration -> Orchestration: validate_template(template)
+            Orchestration -> Orchestration: validate_context(context)
+            
+            ' Select client based on service type
+            Orchestration -> ServiceClient: execute(template, context)
+            activate ServiceClient
+            
+            ' Client communicates with external service
+            ServiceClient -> ExtService: Call service endpoint
+            activate ExtService
+            ExtService -> ExtService: process request
+            ServiceClient <-- ExtService: response
+            deactivate ExtService
+            
+            ' Process result and handle errors
+            alt success
+                Orchestration <-- ServiceClient: processing result
+                ReqService <-- Orchestration: standardized result
+            else error
+                ServiceClient -> ServiceClient: create_error_response
+                Orchestration <-- ServiceClient: error response
+                Orchestration -> Orchestration: handle_error(template, context, error)
+                ReqService <-- Orchestration: error result
+            end
+            
+            deactivate ServiceClient
+            deactivate Orchestration
+            
+            ' Update context with result
+            ReqService -> ContextService: update_context(context_id, data)
+            activate ContextService
+            ContextService -> Storage: _persist_context(context_id, context)
+            ContextService <-- Storage: context updated
+            ReqService <-- ContextService: updated context
+            deactivate ContextService
+            
+            Processor <-- ReqService: result
+            deactivate ReqService
+            
+            ' Update job statistics
+            Processor -> Stats: update_execution_progress(batch_id, processed, succeeded, failed)
+            activate Stats
+            Stats -> Storage: _save_stats()
+            Stats <-- Storage: stats stored
+            Processor <-- Stats
+            deactivate Stats
+            
+            ' Apply retry mechanism for failed items if configured
+            alt result.failed && job_config.retries > 0
+                Processor -> Processor: _schedule_retry(item, job_config.retries - 1)
+                note right: Implements exponential backoff
+            end
+        end
+        
+        ' Update batch progress after chunk
+        Processor -> ContextService: update_batch_context(batch_id, {progress})
+        activate ContextService
+        ContextService -> Storage: _persist_context(batch_id, context)
+        ContextService <-- Storage: context updated
+        Processor <-- ContextService: updated context
+        deactivate ContextService
+    end
+    
+    ' Complete job statistics
+    Processor -> Stats: record_execution_complete(batch_id, status)
+    activate Stats
+    Stats -> Storage: _save_stats()
+    Stats <-- Storage: stats stored
+    Processor <-- Stats
+    deactivate Stats
+    
+else Object Batch
+    ' Get batch data using job configuration filters
+    Processor -> CatRepo: get_batch_data(job_config.category, job_config.filters)
+    activate CatRepo
+    CatRepo --> Processor: batch_data
+    deactivate CatRepo
+    
+    Processor -> ContextService: update_batch_status(batch_id, "processing")
+    activate ContextService
+    ContextService -> Storage: _persist_context(batch_id, context)
+    ContextService <-- Storage: context updated
+    Processor <-- ContextService: updated context
+    deactivate ContextService
+    
+    ' Create single request with all data
+    Processor -> Processor: Create Request object from batch data
+    
+    ' Process as one request with job metadata
+    Processor -> ReqService: process_request(request, template, {job_name: job_config.job_name})
+    activate ReqService
+    
+    ' Create context for batch
+    ReqService -> ContextService: create_context(request, template)
+    activate ContextService
+    ContextService -> Storage: _persist_context(context_id, context)
+    ContextService <-- Storage: context stored
+    ReqService <-- ContextService: context
+    deactivate ContextService
+    
+    ' Execute template for batch
+    ReqService -> Orchestration: execute_template(template, context)
+    activate Orchestration
+    Orchestration -> ServiceClient: execute(template, context)
+    activate ServiceClient
+    ServiceClient -> ExtService: Call service endpoint
+    activate ExtService
+    ServiceClient <-- ExtService: response
+    deactivate ExtService
+    Orchestration <-- ServiceClient: result
+    deactivate ServiceClient
+    ReqService <-- Orchestration: processed result
+    deactivate Orchestration
+    
+    Processor <-- ReqService: result
+    deactivate ReqService
+    
+    ' Update job statistics for object batch
+    alt result.success
+        Processor -> Stats: update_execution_progress(batch_id, processed=1, succeeded=1)
+    else
+        Processor -> Stats: update_execution_progress(batch_id, processed=1, failed=1)
+    end
+    
+    Processor -> Stats: record_execution_complete(batch_id, status)
+    activate Stats
+    Stats -> Storage: _save_stats()
+    Stats <-- Storage: stats stored
+    Processor <-- Stats
+    deactivate Stats
+    
+    ' Update batch with results and distribute if needed
+    alt success
+        Processor -> ContextService: update_batch_status(batch_id, "completed", result)
+        activate ContextService
+        ContextService -> Storage: _persist_context(batch_id, context)
+        ContextService <-- Storage: context updated
+        Processor <-- ContextService: updated context
+        deactivate ContextService
+        
+        ' Distribute results if configured in job
+        alt job_config.distribution is defined
+            Processor -> Processor: _distribute_results(batch_id, job_config, result)
+            
+            loop for each user in job_config.distribution.users
+                ' Create structured batch reference
+                Processor -> Processor: create_batch_reference(batch_id, job_config)
+                
+                Processor -> ContextService: set_batch_reference(user_id, job_config.distribution.purpose_id, reference)
+                activate ContextService
+                ContextService -> Storage: update user context with reference
+                ContextService <-- Storage: user context updated
+                Processor <-- ContextService: success
+                deactivate ContextService
+            end
+            
+            ' Handle matrix references if configured
+            alt job_config.distribution.reference_type == "matrix"
+                Processor -> ContextService: set_batch_reference_matrix(category_id, reference)
+                activate ContextService
+                ContextService -> Storage: store matrix reference
+                ContextService <-- Storage: reference stored
+                Processor <-- ContextService: success
+                deactivate ContextService
+            end
+        end
+    else error
+        Processor -> ContextService: update_batch_status(batch_id, "failed", error)
+        activate ContextService
+        ContextService -> Storage: _persist_context(batch_id, context)
+        ContextService <-- Storage: context updated
+        Processor <-- ContextService: updated context
+        deactivate ContextService
+        
+        ' Handle retry if configured
+        alt job_config.retries > 0
+            Processor -> Scheduler: schedule_retry_job(job_config, job_config.retries - 1)
+            activate Scheduler
+            Processor <-- Scheduler: retry_job_id
+            deactivate Scheduler
+        end
+    end
+    
+else Combined Batch
+    ' For combined batch type with multiple categories from job config
+    Processor -> Processor: _process_combined_batch(batch_id, job_config)
+    
+    ' Get data from multiple categories specified in job config
+    loop for each category in job_config.categories
+        Processor -> CatRepo: get_batch_data(category, job_config.filters)
+        activate CatRepo
+        CatRepo --> Processor: category_data
+        deactivate CatRepo
+        Processor -> Processor: Add to combined_data
+    end
+    
+    Processor -> ContextService: update_batch_status(batch_id, "processing")
+    activate ContextService
+    ContextService -> Storage: _persist_context(batch_id, context)
+    ContextService <-- Storage: context updated
+    Processor <-- ContextService: updated context
+    deactivate ContextService
+    
+    ' Create request with combined data
+    Processor -> Processor: Create Request with combined data
+    
+    ' Process combined request
+    Processor -> ReqService: process_request(request, template, {job_name: job_config.job_name})
+    activate ReqService
+    
+    ' Processing is similar to object batch
+    ReqService -> ContextService: create_context(request, template)
+    activate ContextService
+    ReqService <-- ContextService: context
+    deactivate ContextService
+    
+    ReqService -> Orchestration: execute_template(template, context)
+    activate Orchestration
+    Orchestration -> ServiceClient: execute(template, context)
+    activate ServiceClient
+    ServiceClient -> ExtService: Call service endpoint
+    ServiceClient <-- ExtService: response
+    Orchestration <-- ServiceClient: result
+    deactivate ServiceClient
+    ReqService <-- Orchestration: processed result
+    deactivate Orchestration
+    
+    Processor <-- ReqService: result
+    deactivate ReqService
+    
+    ' Update job statistics for combined batch
+    Processor -> Stats: update_execution_progress(batch_id, processed, succeeded, failed)
+    activate Stats
+    Stats -> Storage: _save_stats()
+    Stats <-- Storage: stats stored
+    Processor <-- Stats
+    deactivate Stats
+    
+    Processor -> Stats: record_execution_complete(batch_id, status)
+    activate Stats
+    Stats -> Storage: _save_stats()
+    Stats <-- Storage: stats stored
+    Processor <-- Stats
+    deactivate Stats
+end
+
+' Return results and complete the flow
+Processor -> API: return batch_id with status
+deactivate Processor
+
+API -> Client: batch processing response with batch_id
+deactivate API
+deactivate Controller
+
+note right of ContextService
+  Context Management:
+  - Batch-level context stored with job metadata
+  - Per-item context for individual processing
+  - Results stored in context with job reference
+  - Batch references for result sharing
+end note
+
+note right of Processor
+  BatchProcessor Features:
+  - DEFAULT_BATCH_SIZE = 100
+  - Job-based configuration
+  - Support for Individual/Object/Combined types
+  - Prioritized processing (HIGH/MEDIUM/LOW)
+  - Automatic retries with backoff
+  - Result distribution to users
+  - Enhanced status tracking with JobStatistics
+end note
+
+note right of Stats
+  JobStatistics Features:
+  - Per-job statistics tracking
+  - Purpose-specific metrics
+  - Historical execution data
+  - Performance analytics
+  - Execution timestamps and durations
+end note
+
+note right of Scheduler
+  BatchScheduler Features:
+  - Supports various scheduling frequencies
+  - Handles job priorities
+  - Manages retry mechanism
+  - Tracks job execution history
+  - Provides job status monitoring
+end note
+
+note right of Controller
+  RequestController Features:
+  - Handles both individual and batch requests
+  - Supports immediate and background processing
+  - Provides batch status tracking endpoints
+  - Integrates with job scheduling system
+  - Exposes job statistics APIs
+end note
+
+@enduml

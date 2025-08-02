@@ -1,0 +1,205 @@
+version: '3.8'
+
+services:
+  # Task Repository Service for centralized task management
+  task-repo-service:
+    build:
+      context: ../../database-layer/task-repo-service
+      dockerfile: Dockerfile
+    container_name: task-repo-service
+    restart: always
+    ports:
+      - "8503:8503"
+    environment:
+      - MONGODB_URI=mongodb://${MONGO_USERNAME:-admin}:${MONGO_PASSWORD:-password}@mongodb:27017/task_repository
+      - MONGODB_DATABASE=task_repository
+      - MONGODB_TASKS_COLLECTION=tasks
+      - API_KEY=dev_api_key
+      - HOST=0.0.0.0
+      - PORT=8503
+      - SERVICE_NAME=task-repo-service
+    depends_on:
+      - mongodb
+    networks:
+      - marketing-network
+
+  # MongoDB for campaign storage and task repository
+  mongodb:
+    image: mongo:5.0
+    container_name: marketing-mongodb
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-password}
+      MONGO_INITDB_DATABASE: task_repository
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ../../database-layer/init-scripts/mongo:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/admin --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    networks:
+      - marketing-network
+
+  # Marketing API service
+  marketing-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: marketing-api
+    restart: always
+    depends_on:
+      - mongodb
+      - task-repo-service
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./src:/app/src
+      - api_logs:/app/logs
+    environment:
+      - MONGODB_URI=mongodb://${MONGO_USERNAME:-admin}:${MONGO_PASSWORD:-password}@mongodb:27017/
+      - MONGODB_DATABASE=${MONGODB_DATABASE:-marketing}
+      - CAMPAIGN_CHECK_INTERVAL=60
+      - LOG_LEVEL=INFO
+      # Task Repository Service configuration
+      - TASK_REPO_URL=http://task-repo-service:8503
+      - TASK_REPO_API_KEY=dev_api_key
+      - SERVICE_ID=marketing-api-service
+      # Tenant context configuration
+      - TENANT_HEADER=X-Tenant-ID
+      - TENANT_SUBDOMAIN_ENABLED=true
+      - TENANT_PATH_ENABLED=true
+      # User database (read access)
+      - USER_DB_URI=${USER_DB_URI:-postgresql://user_readonly:password@postgres-system:5432/user_db}
+      - USER_DB_NAME=${USER_DB_NAME:-user_db}
+      # CRM database (read/write access)
+      - CRM_DB_URI=${CRM_DB_URI:-postgresql://crm_readwrite:password@postgres-system:5432/crm_db}
+      - CRM_DB_NAME=${CRM_DB_NAME:-crm_db}
+      # Product database (read/write access)
+      - PRODUCT_DB_URI=${PRODUCT_DB_URI:-postgresql://product_readwrite:password@postgres-system:5432/product_db}
+      - PRODUCT_DB_NAME=${PRODUCT_DB_NAME:-product_db}
+      # Marketing database (own database)
+      - MARKETING_DB_URI=${MARKETING_DB_URI:-postgresql://marketing_admin:password@postgres-marketing:5432/marketing_db}
+      - MARKETING_DB_NAME=${MARKETING_DB_NAME:-marketing_db}
+    entrypoint: ["python"]
+    command: ["-m", "src.main"]
+    healthcheck:
+      test: curl --fail http://localhost:8000/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - marketing-network
+      - database-network
+
+  # Campaign processor worker
+  campaign-processor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: campaign-processor
+    restart: always
+    depends_on:
+      - mongodb
+      - task-repo-service
+    volumes:
+      - ./src:/app/src
+      - processor_logs:/app/logs
+    environment:
+      - MONGODB_URI=mongodb://${MONGO_USERNAME:-admin}:${MONGO_PASSWORD:-password}@mongodb:27017/
+      - MONGODB_DATABASE=${MONGODB_DATABASE:-marketing}
+      # Task Repository Service configuration
+      - TASK_REPO_URL=http://task-repo-service:8503
+      - TASK_REPO_API_KEY=dev_api_key
+      - SERVICE_ID=marketing-processor-${WORKER_ID:-worker-1}
+      # Processing settings
+      - CAMPAIGN_CHECK_INTERVAL=${CAMPAIGN_CHECK_INTERVAL:-60}
+      - TASK_CHECK_INTERVAL=${TASK_CHECK_INTERVAL:-30}
+      - METRICS_PORT=8080
+      - MAX_BATCH_SIZE=${MAX_BATCH_SIZE:-100}
+      - WORKER_ID=${WORKER_ID:-worker-1}
+      - LOG_LEVEL=INFO
+      # Tenant context configuration
+      - TENANT_HEADER=X-Tenant-ID
+      - TENANT_SUBDOMAIN_ENABLED=true
+      - TENANT_PATH_ENABLED=true
+      # User database (read access)
+      - USER_DB_URI=${USER_DB_URI:-postgresql://user_readonly:password@postgres-system:5432/user_db}
+      - USER_DB_NAME=${USER_DB_NAME:-user_db}
+      # CRM database (read/write access)
+      - CRM_DB_URI=${CRM_DB_URI:-postgresql://crm_readwrite:password@postgres-system:5432/crm_db}
+      - CRM_DB_NAME=${CRM_DB_NAME:-crm_db}
+      # Product database (read/write access)
+      - PRODUCT_DB_URI=${PRODUCT_DB_URI:-postgresql://product_readwrite:password@postgres-system:5432/product_db}
+      - PRODUCT_DB_NAME=${PRODUCT_DB_NAME:-product_db}
+      # Marketing database (own database)
+      - MARKETING_DB_URI=${MARKETING_DB_URI:-postgresql://marketing_admin:password@postgres-marketing:5432/marketing_db}
+      - MARKETING_DB_NAME=${MARKETING_DB_NAME:-marketing_db}
+    entrypoint: ["python"]
+    command: ["-m", "src.interfaces.workers.task_processor"]
+    healthcheck:
+      test: curl --fail http://localhost:8080/metrics || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - marketing-network
+      - database-network
+
+  # Grafana for metrics visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: marketing-grafana
+    restart: always
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    depends_on:
+      - prometheus
+    networks:
+      - marketing-network
+
+  # Prometheus for metrics collection
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: marketing-prometheus
+    restart: always
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    networks:
+      - marketing-network
+
+volumes:
+  mongodb_data:
+  api_logs:
+  processor_logs:
+  grafana_data:
+  prometheus_data:
+
+networks:
+  marketing-network:
+    driver: bridge
+  database-network:
+    driver: bridge 

@@ -1,0 +1,370 @@
+# Expert Base Configurations
+# This file contains configurations for all expert bots
+
+# Instagram Expert Framework
+instagram:
+  core_config:
+    model_id: "instagram"
+    expert_type: "instagram"
+    base_parameters:
+      temperature: 0.7
+      max_tokens: 2000
+    capabilities:
+      - content_generation
+      - content_analysis
+      - content_review
+      - hashtag_optimization
+  modes:
+    generate:
+      processor: "content_generation_pipeline"
+      parameters:
+        content_type: "post"
+        tone: "friendly and engaging"
+        target_audience: "general"
+        brand_voice: "authentic and relatable"
+        key_messages: ""
+        character_limit: 2200
+        include_hashtags: true
+        hashtag_count: 5
+        instructions: "Create an engaging Instagram post that resonates with the target audience."
+      knowledge_filters:
+        domain: "instagram"
+        content_type: "generation"
+      allowed_user_parameters:
+        - content_type
+        - tone
+        - target_audience
+        - brand_voice
+        - key_messages
+        - character_limit
+        - include_hashtags
+        - hashtag_count
+        - instructions
+        - content_seed
+    analyze:
+      processor: "content_analysis_pipeline"
+      parameters:
+        analysis_depth: "comprehensive"
+        focus_areas: "engagement, audience appeal, technical quality"
+        target_audience: "general"
+        engagement_metrics: "likes, comments, shares, saves"
+        competitive_comparison: false
+        benchmark: "industry average"
+      knowledge_filters:
+        domain: "instagram"
+        content_type: "analysis"
+      allowed_user_parameters:
+        - analysis_depth
+        - focus_areas
+        - target_audience
+        - engagement_metrics
+        - competitive_comparison
+        - benchmark
+    review:
+      processor: "content_review_pipeline"
+      parameters:
+        review_strictness: "balanced"
+        focus_areas: "quality, compliance, engagement"
+        check_brand_alignment: true
+        compliance_check: true
+        target_audience: "general"
+        quality_threshold: 7
+      knowledge_filters:
+        domain: "instagram"
+        content_type: "review"
+      allowed_user_parameters:
+        - review_strictness
+        - focus_areas
+        - check_brand_alignment
+        - compliance_check
+        - target_audience
+        - quality_threshold
+
+# Etsy Expert Framework
+etsy:
+  core_config:
+    model_id: "etsy"
+    expert_type: "etsy"
+    base_parameters:
+      temperature: 0.7
+      max_tokens: 2000
+    capabilities:
+      - product_description_generation
+      - listing_analysis
+      - seo_optimization
+      - keyword_research
+  modes:
+    generate:
+      processor: "content_generation_pipeline"
+      parameters:
+        content_type: "product_description"
+        tone: "warm and descriptive"
+        target_audience: "etsy shoppers"
+        product_details: ""
+        character_limit: 3000
+        include_keywords: true
+        keyword_count: 5
+        instructions: "Create an engaging Etsy product description that highlights the unique qualities."
+      knowledge_filters:
+        domain: "etsy"
+        content_type: "generation"
+    analyze:
+      processor: "content_analysis_pipeline"
+      parameters:
+        analysis_depth: "comprehensive"
+        focus_areas: "conversion potential, search optimization, customer appeal"
+        target_audience: "etsy shoppers"
+        marketplace_metrics: "views, favorites, conversions"
+        competitive_comparison: false
+        benchmark: "category average"
+      knowledge_filters:
+        domain: "etsy"
+        content_type: "analysis"
+    review:
+      processor: "content_review_pipeline"
+      parameters:
+        review_strictness: "balanced"
+        focus_areas: "quality, compliance, conversion"
+        check_brand_alignment: true
+        compliance_check: true
+        target_audience: "etsy shoppers"
+        quality_threshold: 7
+      knowledge_filters:
+        domain: "etsy"
+        content_type: "review"
+
+# Marketing Expert Framework
+marketing:
+  core_config:
+    model_id: "marketing"
+    expert_type: "marketing"
+    base_parameters:
+      temperature: 0.7
+      max_tokens: 2000
+    capabilities:
+      - campaign_content_generation
+      - marketing_analysis
+      - audience_targeting
+      - copy_optimization
+  modes:
+    generate:
+      processor: "content_generation_pipeline"
+      parameters:
+        content_type: "marketing_copy"
+        tone: "persuasive and professional"
+        target_audience: "potential customers"
+        campaign_goals: ""
+        character_limit: 2000
+        include_cta: true
+        instructions: "Create compelling marketing copy that drives conversions."
+      knowledge_filters:
+        domain: "marketing"
+        content_type: "generation"
+    analyze:
+      processor: "content_analysis_pipeline"
+      parameters:
+        analysis_depth: "comprehensive"
+        focus_areas: "conversion potential, messaging clarity, brand alignment"
+        target_audience: "potential customers"
+        marketing_metrics: "conversions, engagement, reach"
+        competitive_comparison: false
+        benchmark: "industry average"
+      knowledge_filters:
+        domain: "marketing"
+        content_type: "analysis"
+    review:
+      processor: "content_review_pipeline"
+      parameters:
+        review_strictness: "balanced"
+        focus_areas: "quality, compliance, conversion"
+        check_brand_alignment: true
+        compliance_check: true
+        target_audience: "potential customers"
+        quality_threshold: 7
+      knowledge_filters:
+        domain: "marketing"
+        content_type: "review"
+
+# Branding Expert Framework
+branding:
+  core_config:
+    model_id: "branding"
+    expert_type: "branding"
+    base_parameters:
+      temperature: 0.7
+      max_tokens: 2000
+    capabilities:
+      - brand_content_generation
+      - brand_analysis
+      - brand_consistency_review
+      - voice_and_tone_optimization
+  modes:
+    generate:
+      processor: "content_generation_pipeline"
+      parameters:
+        content_type: "brand_messaging"
+        tone: "on-brand and consistent"
+        target_audience: "brand audience"
+        brand_values: ""
+        character_limit: 2000
+        brand_guidelines: ""
+        instructions: "Create content that aligns with brand identity and values."
+      knowledge_filters:
+        domain: "branding"
+        content_type: "generation"
+    analyze:
+      processor: "content_analysis_pipeline"
+      parameters:
+        analysis_depth: "comprehensive"
+        focus_areas: "brand alignment, voice consistency, message clarity"
+        target_audience: "brand audience"
+        brand_metrics: "perception, recognition, loyalty"
+        competitive_comparison: false
+        benchmark: "industry leaders"
+      knowledge_filters:
+        domain: "branding"
+        content_type: "analysis"
+    review:
+      processor: "content_review_pipeline"
+      parameters:
+        review_strictness: "strict"
+        focus_areas: "brand alignment, consistency, quality"
+        check_brand_alignment: true
+        compliance_check: true
+        target_audience: "brand audience"
+        quality_threshold: 8
+      knowledge_filters:
+        domain: "branding"
+        content_type: "review"
+
+# Twitter Expert
+twitter:
+  core_config:
+    model_id: twitter-specialized-llm
+    base_parameters:
+      temperature: 0.6
+      max_tokens: 1000
+    adapters:
+      default: adapters/twitter_adapter
+      thread: adapters/twitter_thread_adapter
+    capabilities:
+      - tweet_generation
+      - thread_creation
+      - engagement_strategy
+      - trend_analysis
+  modes:
+    generate:
+      processor: content_generation_pipeline
+      parameters:
+        style: concise
+        format_check: true
+        max_characters: 280
+      knowledge_filters:
+        domain: twitter_posts
+        content_type: tweet
+    thread:
+      processor: twitter_thread_pipeline
+      parameters:
+        max_tweets: 10
+        coherence_check: true
+        thread_style: educational
+      knowledge_filters:
+        domain: twitter_threads
+        content_type: thread
+    analyze:
+      processor: content_analysis_pipeline
+      parameters:
+        focus: engagement
+        include_comparisons: true
+      knowledge_filters:
+        domain: twitter_metrics
+        content_type: analysis
+
+# Email Marketing Expert
+email:
+  core_config:
+    model_id: email-marketing-llm
+    base_parameters:
+      temperature: 0.5
+      max_tokens: 3000
+    adapters:
+      default: adapters/email_adapter
+      subject: adapters/email_subject_adapter
+    capabilities:
+      - email_generation
+      - subject_line_optimization
+      - campaign_analysis
+      - segmentation_strategy
+  modes:
+    generate:
+      processor: email_generation_pipeline
+      parameters:
+        format: html
+        include_cta: true
+        tone: professional
+      knowledge_filters:
+        domain: email_marketing
+        content_type: newsletter
+    subject:
+      processor: subject_line_pipeline
+      parameters:
+        style: compelling
+        max_length: 50
+        a_b_variants: 3
+      knowledge_filters:
+        domain: email_subjects
+        content_type: subject_line
+    analyze:
+      processor: content_analysis_pipeline
+      parameters:
+        metrics:
+          - open_rate
+          - click_through
+          - conversion
+        comparative_analysis: true
+      knowledge_filters:
+        domain: email_performance
+        content_type: metrics
+
+# SEO Expert
+seo:
+  core_config:
+    model_id: seo-specialized-llm
+    base_parameters:
+      temperature: 0.4
+      max_tokens: 4000
+    adapters:
+      default: adapters/seo_adapter
+      keyword: adapters/keyword_research_adapter
+    capabilities:
+      - content_optimization
+      - keyword_research
+      - meta_description_generation
+      - seo_analysis
+  modes:
+    optimize:
+      processor: seo_optimization_pipeline
+      parameters:
+        target_keyword_density: 2.0
+        readability_check: true
+        heading_structure: true
+      knowledge_filters:
+        domain: seo_optimization
+        content_type: webpage
+    keywords:
+      processor: keyword_research_pipeline
+      parameters:
+        max_keywords: 20
+        include_volume: true
+        include_competition: true
+      knowledge_filters:
+        domain: keyword_research
+        content_type: keywords
+    analyze:
+      processor: seo_analysis_pipeline
+      parameters:
+        depth: comprehensive
+        include_recommendations: true
+      knowledge_filters:
+        domain: seo_performance
+        content_type: analysis 

@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:6.0
+    container_name: category-repository-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - category-repository-network
+
+  category-repository-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: category-repository-service
+    ports:
+      - "8080:8080"
+    environment:
+      - MONGODB_URI=mongodb://admin:password@mongodb:27017/
+      - MONGODB_DATABASE=category_repository
+      - API_KEY=development_api_key
+    depends_on:
+      - mongodb
+    networks:
+      - category-repository-network
+    volumes:
+      - ./src:/app/src
+      - ./.env:/app/.env
+
+networks:
+  category-repository-network:
+    driver: bridge
+
+volumes:
+  mongodb_data: 

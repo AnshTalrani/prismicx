@@ -1,0 +1,339 @@
+[
+  {
+    "name": "Instagram",
+    "description": "Instagram business strategy and performance insights",
+    "tags": ["social_media", "visual_content"],
+    "subtopics": [
+      {
+        "name": "Visual Theme",
+        "content": {
+          "key_points": [
+            "Color palette and consistency",
+            "Grid layout planning",
+            "Visual style guide",
+            "Feed aesthetics",
+            "Story highlights design"
+          ],
+          "expertise_level": "intermediate"
+        },
+        "tags": ["design", "branding", "aesthetics"]
+      },
+      {
+        "name": "Content Strategy",
+        "content": {
+          "key_points": [
+            "Content pillars",
+            "Content calendar",
+            "Post types mix",
+            "Reels strategy",
+            "Stories content plan",
+            "Carousel post guidelines",
+            "Live streaming schedule"
+          ],
+          "expertise_level": "intermediate"
+        },
+        "tags": ["content", "strategy", "planning"]
+      },
+      {
+        "name": "Brand Voice & Tone",
+        "content": {
+          "key_points": [
+            "Caption writing style",
+            "Brand personality in comments",
+            "Story voice guidelines",
+            "Emoji usage policy",
+            "Response templates"
+          ],
+          "expertise_level": "intermediate"
+        },
+        "tags": ["communication", "branding"]
+      },
+      {
+        "name": "Engagement Strategy",
+        "content": {
+          "key_points": [
+            "Comment response guidelines",
+            "DM management",
+            "Community building tactics",
+            "Follower interaction plan",
+            "UGC strategy"
+          ],
+          "expertise_level": "intermediate"
+        },
+        "tags": ["community", "engagement"]
+      },
+      {
+        "name": "Performance Analytics",
+        "content": {
+          "key_points": [
+            "Engagement rate tracking",
+            "Reach and impressions",
+            "Story performance",
+            "Reels analytics",
+            "Audience growth metrics",
+            "Best performing content types"
+          ],
+          "expertise_level": "advanced"
+        },
+        "tags": ["analytics", "metrics"]
+      },
+      {
+        "name": "Shopping Integration",
+        "content": {
+          "key_points": [
+            "Product tagging setup",
+            "Shop organization",
+            "Product showcase strategy",
+            "Shopping post optimization",
+            "Collection curation"
+          ],
+          "expertise_level": "advanced"
+        },
+        "tags": ["ecommerce", "sales"]
+      }
+    ]
+  },
+  {
+    "name": "Etsy",
+    "description": "Etsy shop management and optimization",
+    "tags": ["ecommerce", "handmade"],
+    "subtopics": [
+      {
+        "name": "Shop Optimization",
+        "content": {
+          "key_points": [
+            "Shop banner design",
+            "About section optimization",
+            "Shop policies setup",
+            "Shop sections organization",
+            "Announcement optimization"
+          ],
+          "expertise_level": "intermediate"
+        },
+        "tags": ["setup", "optimization"]
+      },
+      {
+        "name": "Product Photography",
+        "content": {
+          "key_points": [
+            "Photo style guide",
+            "Product staging",
+            "Lighting techniques",
+            "Background selection",
+            "Detail shot guidelines",
+            "Size reference photos"
+          ],
+          "expertise_level": "advanced"
+        },
+        "tags": ["photography", "visual"]
+      },
+      {
+        "name": "SEO & Listings",
+        "content": {
+          "key_points": [
+            "Keyword research",
+            "Title optimization",
+            "Tag strategy",
+            "Description templates",
+            "Category selection",
+            "Attribute optimization"
+          ],
+          "expertise_level": "advanced"
+        },
+        "tags": ["seo", "visibility"]
+      },
+      {
+        "name": "Pricing Strategy",
+        "content": {
+          "key_points": [
+            "Cost calculation",
+            "Profit margins",
+            "Competitive analysis",
+            "Shipping cost integration",
+            "Bundle pricing",
+            "Sale strategy"
+          ],
+          "expertise_level": "intermediate"
+        },
+        "tags": ["pricing", "finance"]
+      },
+      {
+        "name": "Customer Service",
+        "content": {
+          "key_points": [
+            "Message templates",
+            "Response time management",
+            "Review management",
+            "Dispute resolution",
+            "Order updates system"
+          ],
+          "expertise_level": "intermediate"
+        },
+        "tags": ["customer_support", "communication"]
+      }
+    ]
+  },
+  {
+    "name": "Marketing",
+    "description": "Overall marketing strategy and campaigns",
+    "tags": ["strategy", "promotion"],
+    "subtopics": [
+      {
+        "name": "Product Strategy",
+        "content": {
+          "key_points": [
+            "Product line planning",
+            "Packaging design",
+            "Product photography",
+            "Product descriptions",
+            "Pricing strategy",
+            "Bundle creation"
+          ],
+          "expertise_level": "advanced"
+        },
+        "tags": ["product", "strategy"]
+      },
+      {
+        "name": "Content Marketing",
+        "content": {
+          "key_points": [
+            "Blog content strategy",
+            "Social media content",
+            "Email newsletter planning",
+            "Video content creation",
+            "Content calendar",
+            "SEO optimization"
+          ],
+          "expertise_level": "intermediate"
+        },
+        "tags": ["content", "strategy"]
+      },
+      {
+        "name": "Email Marketing",
+        "content": {
+          "key_points": [
+            "List building tactics",
+            "Email sequence design",
+            "Newsletter strategy",
+            "Automation workflows",
+            "A/B testing plan",
+            "Segmentation strategy"
+          ],
+          "expertise_level": "intermediate"
+        },
+        "tags": ["email", "automation"]
+      },
+      {
+        "name": "Advertising",
+        "content": {
+          "key_points": [
+            "Platform selection",
+            "Ad campaign structure",
+            "Budget allocation",
+            "Audience targeting",
+            "Ad creative guidelines",
+            "Performance tracking"
+          ],
+          "expertise_level": "advanced"
+        },
+        "tags": ["advertising", "paid_media"]
+      },
+      {
+        "name": "Packaging Strategy",
+        "content": {
+          "key_points": [
+            "Packaging design",
+            "Material selection",
+            "Unboxing experience",
+            "Brand consistency",
+            "Cost optimization",
+            "Sustainability considerations"
+          ],
+          "expertise_level": "intermediate"
+        },
+        "tags": ["packaging", "branding"]
+      }
+    ]
+  },
+  {
+    "name": "Branding",
+    "description": "Brand identity and strategy development",
+    "tags": ["identity", "strategy"],
+    "subtopics": [
+      {
+        "name": "Visual Identity",
+        "content": {
+          "key_points": [
+            "Logo variations",
+            "Color palette",
+            "Typography system",
+            "Image style guide",
+            "Icon design",
+            "Pattern and texture usage"
+          ],
+          "expertise_level": "advanced"
+        },
+        "tags": ["design", "visual"]
+      },
+      {
+        "name": "Brand Voice",
+        "content": {
+          "key_points": [
+            "Tone guidelines",
+            "Writing style guide",
+            "Communication principles",
+            "Vocabulary preferences",
+            "Messaging frameworks"
+          ],
+          "expertise_level": "intermediate"
+        },
+        "tags": ["communication", "messaging"]
+      },
+      {
+        "name": "Brand Story",
+        "content": {
+          "key_points": [
+            "Origin story",
+            "Mission statement",
+            "Vision statement",
+            "Core values",
+            "Brand personality",
+            "Target audience personas"
+          ],
+          "expertise_level": "intermediate"
+        },
+        "tags": ["story", "identity"]
+      },
+      {
+        "name": "Brand Applications",
+        "content": {
+          "key_points": [
+            "Social media guidelines",
+            "Email templates",
+            "Packaging design",
+            "Marketing materials",
+            "Website style guide",
+            "Photography style"
+          ],
+          "expertise_level": "advanced"
+        },
+        "tags": ["implementation", "consistency"]
+      },
+      {
+        "name": "Brand Strategy",
+        "content": {
+          "key_points": [
+            "Positioning strategy",
+            "Competitive analysis",
+            "Brand architecture",
+            "Growth strategy",
+            "Brand metrics",
+            "Evolution planning"
+          ],
+          "expertise_level": "advanced"
+        },
+        "tags": ["strategy", "planning"]
+      }
+    ]
+  }
+]

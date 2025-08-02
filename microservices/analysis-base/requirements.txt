@@ -1,0 +1,60 @@
+# Web framework
+fastapi==0.95.1
+uvicorn==0.22.0
+pydantic==1.10.7
+email-validator==2.0.0
+
+# Database
+sqlalchemy==2.0.9
+alembic==1.10.4
+psycopg2-binary==2.9.6
+asyncpg==0.27.0
+
+# Authentication
+python-jose==3.3.0
+passlib==1.7.4
+python-multipart==0.0.6
+
+# Utilities
+python-dotenv==1.0.0
+pyyaml==6.0
+httpx==0.24.0
+tenacity==8.2.2
+aiohttp==3.8.4
+pandas==2.0.1
+numpy==1.24.3
+
+# Distributed processing
+celery==5.2.7
+redis==4.5.4
+
+# Testing
+pytest==7.3.1
+pytest-asyncio==0.21.0
+pytest-cov==4.1.0
+requests==2.30.0
+aioresponses==0.7.4
+
+# Monitoring
+prometheus-client==0.16.0
+opentelemetry-api==1.17.0
+opentelemetry-sdk==1.17.0
+opentelemetry-exporter-prometheus==1.17.0
+
+# ML tools (basic set, can be expanded based on specific needs)
+scikit-learn==1.2.2
+scipy==1.10.1
+
+# Additional dependencies for analysis microservice
+motor>=3.1.1
+pymongo>=4.3.3
+jsonschema>=3.2.0
+jsonschema>=3.2.0
+backoff>=2.2.1
+# Add the database layer common package
+database-layer-common>=1.0.0
+aiocache>=0.12.0
+ujson>=5.7.0
+orjson>=3.8.12
+pyjwt>=2.6.0
+cryptography>=39.0.0

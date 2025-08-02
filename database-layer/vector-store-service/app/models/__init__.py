@@ -1,0 +1,1 @@
+"""Models package for the vector store service.""" 

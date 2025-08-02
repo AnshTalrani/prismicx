@@ -1,0 +1,122 @@
+[
+  {
+    "email": "john.smith@example.com",
+    "first_name": "John",
+    "last_name": "Smith",
+    "status": "PENDING",
+    "custom_attributes": {
+      "customer_tier": "premium",
+      "membership_since": "2020-03-15",
+      "last_purchase_date": "2023-11-01",
+      "interests": ["electronics", "smart home", "photography"]
+    }
+  },
+  {
+    "email": "emily.johnson@example.com",
+    "first_name": "Emily",
+    "last_name": "Johnson",
+    "status": "PENDING",
+    "custom_attributes": {
+      "customer_tier": "premium",
+      "membership_since": "2019-07-22",
+      "last_purchase_date": "2023-10-15",
+      "interests": ["fashion", "beauty", "home decor"]
+    }
+  },
+  {
+    "email": "michael.brown@example.com",
+    "first_name": "Michael",
+    "last_name": "Brown",
+    "status": "PENDING",
+    "custom_attributes": {
+      "customer_tier": "premium",
+      "membership_since": "2021-01-10",
+      "last_purchase_date": "2023-09-30",
+      "interests": ["sports", "fitness", "outdoor"]
+    }
+  },
+  {
+    "email": "sarah.davis@example.com",
+    "first_name": "Sarah",
+    "last_name": "Davis",
+    "status": "PENDING",
+    "custom_attributes": {
+      "customer_tier": "premium",
+      "membership_since": "2018-11-05",
+      "last_purchase_date": "2023-10-28",
+      "interests": ["books", "music", "electronics"]
+    }
+  },
+  {
+    "email": "robert.wilson@example.com",
+    "first_name": "Robert",
+    "last_name": "Wilson",
+    "status": "PENDING",
+    "custom_attributes": {
+      "customer_tier": "premium",
+      "membership_since": "2022-02-18",
+      "last_purchase_date": "2023-11-05",
+      "interests": ["travel", "photography", "technology"]
+    }
+  },
+  {
+    "email": "jennifer.taylor@example.com",
+    "first_name": "Jennifer",
+    "last_name": "Taylor",
+    "status": "PENDING",
+    "custom_attributes": {
+      "customer_tier": "premium",
+      "membership_since": "2020-08-30",
+      "last_purchase_date": "2023-10-20",
+      "interests": ["cooking", "home improvement", "gardening"]
+    }
+  },
+  {
+    "email": "david.anderson@example.com",
+    "first_name": "David",
+    "last_name": "Anderson",
+    "status": "PENDING",
+    "custom_attributes": {
+      "customer_tier": "premium",
+      "membership_since": "2019-05-12",
+      "last_purchase_date": "2023-11-03",
+      "interests": ["gaming", "computers", "electronics"]
+    }
+  },
+  {
+    "email": "lisa.thomas@example.com",
+    "first_name": "Lisa",
+    "last_name": "Thomas",
+    "status": "PENDING",
+    "custom_attributes": {
+      "customer_tier": "premium",
+      "membership_since": "2021-04-08",
+      "last_purchase_date": "2023-10-10",
+      "interests": ["wellness", "fitness", "nutrition"]
+    }
+  },
+  {
+    "email": "james.martinez@example.com",
+    "first_name": "James",
+    "last_name": "Martinez",
+    "status": "PENDING",
+    "custom_attributes": {
+      "customer_tier": "premium",
+      "membership_since": "2018-10-25",
+      "last_purchase_date": "2023-09-15",
+      "interests": ["automotive", "tools", "DIY"]
+    }
+  },
+  {
+    "email": "michelle.garcia@example.com",
+    "first_name": "Michelle",
+    "last_name": "Garcia",
+    "status": "PENDING",
+    "custom_attributes": {
+      "customer_tier": "premium",
+      "membership_since": "2022-03-17",
+      "last_purchase_date": "2023-10-25",
+      "interests": ["art", "design", "creativity"]
+    }
+  }
+] 

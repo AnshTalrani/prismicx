@@ -1,0 +1,171 @@
+#needs to be updated 
+
+@startuml Request Lifecycle
+
+' Style settings
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowFontSize 11
+
+' Colors
+!define PRIMARY_COLOR #3498DB
+!define SUCCESS_COLOR #2ECC71
+!define WARNING_COLOR #F1C40F
+!define ERROR_COLOR #E74C3C
+!define INFO_COLOR #95A5A6
+
+' State colors
+skinparam state {
+    BackgroundColor<<initial>> #FFFFFF
+    BackgroundColor<<pending>> #F7DC6F
+    BackgroundColor<<processing>> #85C1E9
+    BackgroundColor<<completed>> #82E0AA
+    BackgroundColor<<failed>> #F1948A
+    BackgroundColor<<cancelled>> #D7DBDD
+    BackgroundColor<<archived>> #EAECEE
+    BorderColor #2C3E50
+    FontColor #2C3E50
+}
+
+' Title
+title Request Lifecycle State Machine
+
+' Initial state
+[*] --> CREATED
+note right of [*]
+  Request creation triggers:
+  - API request
+  - Scheduled task
+  - Event webhook
+end note
+
+' Main states
+state CREATED <<initial>> {
+    [*] --> Validating
+    Validating --> Validated : Valid request
+    Validating --> Invalid : Invalid request
+    Invalid --> [*] : Reject request
+    Validated --> [*] : Accept request
+}
+
+state PENDING <<pending>> {
+    state "In Queue" as queued
+    state "Resource Check" as resources
+    state "Priority Assignment" as priority
+    queued --> resources : Check resources
+    resources --> priority : Resources available
+    resources --> queued : Resources unavailable
+}
+
+state PROCESSING <<processing>> {
+    state "Initialize" as init
+    state "Execute" as execute
+    state "Validate Result" as validate
+    init --> execute : Start processing
+    execute --> validate : Processing complete
+    validate --> execute : Invalid result
+}
+
+state COMPLETED <<completed>> {
+    state "Result Storage" as store
+    state "Cache Update" as cache
+    state "Notification" as notify
+    store --> cache : Store result
+    cache --> notify : Update cache
+}
+
+state FAILED <<failed>> {
+    state "Error Logging" as log
+    state "Retry Analysis" as retry
+    state "Failure Notification" as alert
+    log --> retry : Check retry policy
+    retry --> alert : Max retries exceeded
+    retry --> PENDING : Retry allowed
+}
+
+state CANCELLED <<cancelled>> {
+    state "User Cancelled" as user_cancel
+    state "System Cancelled" as sys_cancel
+    state "Timeout" as timeout
+}
+
+state ARCHIVED <<archived>> {
+    state "Compress Data" as compress
+    state "Update Metadata" as metadata
+    state "Move to Archive" as move
+    compress --> metadata : Data compressed
+    metadata --> move : Metadata updated
+}
+
+' Transitions
+CREATED --> PENDING : Request accepted
+PENDING --> PROCESSING : Start processing
+PROCESSING --> COMPLETED : Success
+PROCESSING --> FAILED : Error occurred
+PROCESSING --> CANCELLED : Timeout/Cancel
+COMPLETED --> ARCHIVED : After retention period
+FAILED --> ARCHIVED : After max retries
+CANCELLED --> ARCHIVED : After retention period
+
+' Composite states
+state "ERROR HANDLING" as ERROR {
+    state "Log Error" as log_error
+    state "Notify Admin" as notify_admin
+    state "Update Metrics" as update_metrics
+    log_error --> notify_admin : Critical error
+    notify_admin --> update_metrics : Alert sent
+}
+
+' Special transitions
+PROCESSING -right-> ERROR : Exception
+ERROR --> FAILED : Unrecoverable
+ERROR --> PROCESSING : Recovered
+
+' Final state
+ARCHIVED --> [*]
+
+' Notes
+note right of PENDING
+  Pending state includes:
+  - Queue position
+  - Priority level
+  - Resource requirements
+end note
+
+note right of PROCESSING
+  Processing includes:
+  - Template execution
+  - External service calls
+  - Result validation
+end note
+
+note right of COMPLETED
+  Completion tasks:
+  - Store results
+  - Update cache
+  - Send notifications
+  - Update metrics
+end note
+
+note right of FAILED
+  Failure handling:
+  - Error classification
+  - Retry strategy
+  - Alert triggers
+  - Recovery options
+end note
+
+' Legend
+legend right
+  |= State |= Description |
+  |<back:#F7DC6F>   PENDING    </back>| Awaiting processing |
+  |<back:#85C1E9>   PROCESSING </back>| Active execution |
+  |<back:#82E0AA>   COMPLETED  </back>| Successfully processed |
+  |<back:#F1948A>   FAILED     </back>| Processing failed |
+  |<back:#D7DBDD>   CANCELLED  </back>| Processing cancelled |
+  |<back:#EAECEE>   ARCHIVED   </back>| Historical record |
+endlegend
+
+@enduml 

@@ -1,0 +1,1 @@
+"""Consultancy bot models package for specialized LLM implementations.""" 

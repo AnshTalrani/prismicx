@@ -1,0 +1,25 @@
+fastapi==0.104.1
+uvicorn==0.23.2
+pydantic==2.4.2
+loguru==0.7.2
+pyyaml==6.0.1
+httpx==0.25.1
+python-dotenv==1.0.0
+
+# Vector database
+chromadb==0.4.18
+
+# LLM and embeddings
+langchain==0.0.337
+langchain-community==0.0.15
+sentence-transformers==2.2.2
+transformers==4.35.2
+torch==2.1.1
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+
+redis==5.0.0
+aiocache==0.12.1
+circuitbreaker==1.4.0 

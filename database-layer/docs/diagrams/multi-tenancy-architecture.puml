@@ -1,0 +1,109 @@
+@startuml Multi-Tenancy Architecture
+
+' Setting diagram style
+!define C4_COMPONENT_BGCOLOR #77DD77
+!define DATABASE_BGCOLOR #FFD1DC
+!define TENANT_BGCOLOR #AEC6CF
+!define NOTE_BGCOLOR #FDFD96
+
+skinparam component {
+    BackgroundColor C4_COMPONENT_BGCOLOR
+    BorderColor #000000
+    FontColor #000000
+}
+
+skinparam database {
+    BackgroundColor DATABASE_BGCOLOR
+    BorderColor #000000
+    FontColor #000000
+}
+
+skinparam frame {
+    BackgroundColor TENANT_BGCOLOR
+    BorderColor #000000
+    FontColor #000000
+}
+
+skinparam note {
+    BackgroundColor NOTE_BGCOLOR
+    BorderColor #000000
+    FontColor #000000
+}
+
+' Components and Services
+component "API Gateway" as gateway
+component "Tenant Management\nService" as tenant_mgmt
+component "User Data\nService" as user_data
+component "Task Repository\nService" as task_repo
+component "Category Repository\nService" as category_repo
+component "Management System\nRepository\nService" as mgmt_system_repo
+
+' Databases
+database "tenant_registry DB" as tenant_db
+database "system_users DB" as user_db
+database "task_repository DB" as task_db
+database "category_repository DB" as category_db
+
+frame "management_system_repository DB" as mgmt_system_db {
+    [public Schema] as mgmt_system_public_schema
+}
+
+' Tenant-specific schemas
+frame "Tenant-001" as tenant_001 {
+    [tenant_001_crm] as tenant_001_crm
+    [tenant_001_sales] as tenant_001_sales
+    [tenant_001_marketing] as tenant_001_marketing
+}
+
+frame "Tenant-002" as tenant_002 {
+    [tenant_002_crm] as tenant_002_crm
+    [tenant_002_marketing] as tenant_002_marketing
+}
+
+' Redis Cache
+database "Redis Cache" as redis_cache
+
+' Connections
+' Gateway to services
+gateway --> tenant_mgmt
+gateway --> user_data
+gateway --> task_repo
+gateway --> category_repo
+gateway --> mgmt_system_repo
+
+' Services to databases
+tenant_mgmt --> tenant_db
+user_data --> user_db
+task_repo --> task_db
+category_repo --> category_db
+mgmt_system_repo --> mgmt_system_db
+
+' Cross-service dependencies
+user_data ..> tenant_mgmt : Get tenant info
+task_repo ..> tenant_mgmt : Get tenant info
+category_repo ..> tenant_mgmt : Get tenant info
+
+' All services use Redis
+tenant_mgmt ..> redis_cache : Caching
+user_data ..> redis_cache : Caching
+task_repo ..> redis_cache : Caching
+category_repo ..> redis_cache : Caching
+mgmt_system_repo ..> redis_cache : Caching
+
+' Tenant provisioning
+tenant_mgmt ..> mgmt_system_repo : Tenant provisioning
+mgmt_system_repo ..> tenant_001_crm : Create schema
+mgmt_system_repo ..> tenant_002_crm : Create schema
+
+' Notes
+note bottom of tenant_001_crm
+  Schema-based tenant isolation 
+  within shared database
+end note
+
+note bottom of redis_cache
+  Redis for caching and 
+  tenant-aware messaging
+end note
+
+@enduml 

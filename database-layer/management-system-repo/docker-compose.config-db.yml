@@ -1,0 +1,104 @@
+version: '3.8'
+
+services:
+  # MongoDB service for config_db
+  mongodb-config:
+    image: mongo:latest
+    container_name: mongodb-config
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: config_db
+    volumes:
+      - mongodb_config_data:/data/db
+    networks:
+      - config_network
+    command: ["--auth"]
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongo mongodb://admin:password@localhost:27017/config_db --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  # Management System Repository Service
+  management-system-repo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: management-system-repo
+    ports:
+      - "8080:8080"
+    environment:
+      # Service settings
+      HOST: 0.0.0.0
+      PORT: 8080
+      DEBUG: "true"
+      RELOAD: "true"
+      
+      # PostgreSQL settings for main data
+      SYSTEM_DB_HOST: postgres
+      SYSTEM_DB_PORT: 5432
+      SYSTEM_DB_USER: postgres
+      SYSTEM_DB_PASSWORD: password
+      SYSTEM_DB_NAME: management_system_repository
+      
+      # MongoDB settings for config_db
+      CONFIG_DB_HOST: mongodb-config
+      CONFIG_DB_PORT: 27017
+      CONFIG_DB_USER: admin
+      CONFIG_DB_PASSWORD: password
+      CONFIG_DB_NAME: config_db
+      
+      # Integration settings
+      TENANT_SERVICE_URL: http://tenant-mgmt-service:8000
+      USER_SERVICE_URL: http://user-data-service:8000
+      TASK_SERVICE_URL: http://task-repo-service:8000
+      
+      # Security settings
+      API_KEY: dev_api_key
+      JWT_SECRET: dev_secret_key
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongodb-config:
+        condition: service_healthy
+    networks:
+      - config_network
+      - postgres_network
+    volumes:
+      - ./src:/app/src
+    command: uvicorn src.main:app --host 0.0.0.0 --port 8080 --reload
+
+  # PostgreSQL service for other data
+  postgres:
+    image: postgres:latest
+    container_name: postgres-config
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: management_system_repository
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - postgres_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  mongodb_config_data:
+  postgres_data:
+
+networks:
+  config_network:
+    driver: bridge
+  postgres_network:
+    driver: bridge 

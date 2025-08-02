@@ -1,0 +1,100 @@
+@startuml Template Management Flow
+
+' Style settings
+skinparam backgroundColor white
+skinparam handwritten false
+skinparam monochrome false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam sequence {
+    ArrowColor #2C3E50
+    LifeLineBackgroundColor #ECF0F1
+    LifeLineBorderColor #7F8C8D
+    ParticipantBackgroundColor #3498DB
+    ParticipantBorderColor #2980B9
+    BoxBackgroundColor #F8F9F9
+}
+
+' Title
+title Template Management Flow in Agent Microservice
+
+' Actors and components
+actor "Developer" as dev
+participant "Template\nValidator" as validator
+participant "Template\nService" as service
+database "Template\nRepository" as repo
+participant "Request\nProcessor" as processor
+
+' Flow
+group Template Creation
+    dev -> validator: Create template JSON
+    activate validator
+    validator -> validator: Validate schema
+    alt Validation Success
+        validator --> dev: Template valid
+    else Validation Failed
+        validator --> dev: Validation errors
+        dev -> validator: Fix and revalidate
+    end
+    deactivate validator
+end
+
+group Template Registration
+    dev -> service: Register template
+    activate service
+    service -> validator: Validate template
+    activate validator
+    validator --> service: Validation result
+    deactivate validator
+    
+    alt Template Valid
+        service -> repo: Store template
+        activate repo
+        repo --> service: Template stored
+        deactivate repo
+        service --> dev: Registration successful
+    else Template Invalid
+        service --> dev: Registration failed
+    end
+    deactivate service
+end
+
+group Template Usage
+    processor -> service: Request template
+    activate service
+    service -> repo: Fetch template
+    activate repo
+    repo --> service: Return template
+    deactivate repo
+    
+    service -> service: Apply template rules
+    service --> processor: Template applied
+    deactivate service
+    
+    processor -> processor: Process request
+end
+
+' Notes
+note right of validator
+  Validates:
+  - JSON schema
+  - Required fields
+  - Parameter rules
+  - Service types
+end note
+
+note right of service
+  Manages:
+  - Template lifecycle
+  - Version control
+  - Dependencies
+end note
+
+note right of repo
+  Stores:
+  - Template JSON
+  - Metadata
+  - Version history
+end note
+
+@enduml 

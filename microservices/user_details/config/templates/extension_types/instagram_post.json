@@ -1,0 +1,164 @@
+{
+    "extension_type": "instagram_post_hybrid",
+    "display_name": "Instagram Post Hybrid Analytics",
+    "description": "Balanced schema for Instagram posts combining hierarchical structure with efficient storage",
+    "version": "1.0",
+    "schema": {
+      "tables": {
+        "instagram_posts": {
+          "description": "Main post table with core metrics",
+          "columns": {
+            "post_id": {
+              "type": "string",
+              "required": true,
+              "primary_key": true
+            },
+            "user_id": {
+              "type": "string",
+              "required": true
+            },
+            "tenant_id": {
+              "type": "string",
+              "required": true
+            },
+              "post_type": {
+              "type": "enum",
+              "values": ["image", "video", "carousel", "reel", "igtv"],
+              "required": true
+            },
+            "post_url": {
+              "type": "string",
+              "required": true
+            },
+            "posted_at": {
+              "type": "timestamp",
+              "required": true
+            },
+  
+            "reach_metrics": {
+              "type": "jsonb",
+              "schema": {
+                "total_reach": "integer",
+                "reach_from_hashtags": "integer",
+                "reach_from_home": "integer",
+                "reach_from_explore": "integer"
+              }
+            },
+            "engagement_metrics": {
+              "type": "jsonb",
+              "schema": {
+                "likes": "integer",
+                "comments": "integer",
+                "saves": "integer",
+                "shares": "integer",
+                "engagement_rate": "float",
+                "sentiment_score": "float"
+              }
+            },
+  
+            "total_reach": {
+              "type": "integer",
+              "description": "Denormalized from reach_metrics for frequent queries"
+            },
+            "engagement_rate": {
+              "type": "float",
+              "description": "Denormalized from engagement_metrics for frequent queries"
+            },
+  
+            "profile_metrics": {
+              "type": "jsonb",
+              "schema": {
+                "profile_visits": "integer",
+                "new_follows": "integer",
+                "website_clicks": "integer"
+              }
+            },
+            "sales_metrics": {
+              "type": "jsonb",
+              "schema": {
+                "product_clicks": "integer",
+                "product_views": "integer",
+                "purchases": "integer",
+                "revenue": "float"
+              }
+            },
+            "video_metrics": {
+              "type": "jsonb",
+              "schema": {
+                "video_views": "integer",
+                "video_replays": "integer",
+                "avg_watch_time": "float",
+                "completion_rate": "float"
+              }
+            },
+              "factor_analysis": {
+              "type": "jsonb",
+              "schema": {
+                "content_quality": "string",
+                "audience_resonance": "string",
+                "sales_effectiveness": "string",
+                "engagement_quality": "string",
+                "reach_effectiveness": "string"
+              }
+            },
+            "practicality": {
+              "type": "jsonb",
+              "schema": {
+                "score": "float",
+                "factors": "json",
+                "recommendations": "json"
+              }
+            },
+  
+            "created_at": {
+              "type": "timestamp"
+            },
+            "updated_at": {
+              "type": "timestamp"
+            }
+          },
+          "indexes": [
+            {
+              "name": "post_lookup_idx",
+              "columns": ["tenant_id", "user_id", "post_id"],
+              "unique": true
+            },
+            {
+              "name": "post_metrics_idx",
+              "columns": ["tenant_id", "user_id", "total_reach", "engagement_rate"],
+              "include": ["post_type", "posted_at"]
+            },
+            {
+              "name": "post_timeline_idx",
+              "columns": ["tenant_id", "user_id", "posted_at"]
+            }
+          ]
+        }
+      }
+    },
+    "features": {
+      "query_optimization": {
+        "denormalized_fields": ["total_reach", "engagement_rate"],
+        "json_path_queries": true,
+        "materialized_views": {
+          "hourly_metrics": {
+            "refresh": "1h",
+            "aggregates": ["avg", "sum", "count"]
+          }
+        }
+      },
+      "data_validation": {
+        "json_schema_validation": true,
+        "metric_constraints": {
+          "engagement_rate": {
+            "min": 0,
+            "max": 100
+          },
+          "sentiment_score": {
+            "min": -1,
+            "max": 1
+          }
+        }
+      }
+    }
+  }

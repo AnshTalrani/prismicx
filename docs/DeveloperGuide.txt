@@ -1,0 +1,132 @@
+# Developer Guide
+
+Welcome to the Developer Guide for this project. This document aims to outline the development processes, architecture details, and best practices to ensure efficient, secure, and maintainable code.
+
+---
+## Table of Contents
+1. Project Overview  
+2. MACH Architecture  
+3. Git Flow Strategy  
+4. Error Handling & Input Validation  
+5. Security Considerations  
+6. Testing Guidelines  
+7. Docker Image Management  
+
+---
+## Project Overview
+This project follows a structured approach by adhering to the existing directory layout. We focus on writing code with clear docstrings and robust error handling, along with a disciplined approach to version control.
+
+### New Microservices
+The project has been expanded to include several new microservices, each designed to handle specific tasks within the system:
+- **communication-base**: Manages communication tasks and API integrations.
+- **agent**: Handles agent-related functionalities.
+- **chatbot**: Provides chatbot capabilities for user interaction.
+- **customer-support-bot**: Offers customer support functionalities.
+- **expert-bots**: Hosts expert systems and AI-driven bots.
+- **mlops-pipeline**: Manages MLOps workflows and pipelines.
+- **management_systems**: Oversees management and administrative tasks.
+- **generative-base**: Focuses on generative AI models and tasks.
+- **marketing-base**: Supports marketing operations and analytics.
+
+Each microservice is containerized using Docker and follows the MACH architecture principles.
+
+---
+## MACH Architecture
+MACH stands for:
+- **Microservices-based**: Each part of the application is designed to be a separate service.
+- **API-first**: All functionalities are exposed via APIs.
+- **Cloud-native**: The application is architected and designed for cloud environments.
+- **Headless**: The system’s back-end services are decoupled from the front-end/UI components.
+
+Aligning with the MACH approach ensures that any service is loosely coupled and can evolve independently.
+
+---
+## Git Flow Strategy
+This repository uses the Git Flow branching model to manage development and releases. Below is the initialization step, which you can reproduce by running:
+
+```
+git flow init -f
+```
+
+During the initialization, you'll be prompted for several options. Here are the choices to make:
+
+- **Branch name for production releases**: `main`
+- **Branch name for "next release" development**: `develop`
+- **Feature branch prefix**: `feature/`
+- **Bugfix branch prefix**: `bugfix/`
+- **Release branch prefix**: `release/`
+- **Hotfix branch prefix**: `hotfix/`
+- **Support branch prefix**: `support/`
+- **Version tag prefix**: `v`
+
+By using Git Flow, you will create branches off of `develop` for new features and bug fixes.
+
+---
+## Error Handling & Input Validation
+- **Input Validation**: Validate all inputs from external sources to prevent injection attacks and data corruption.
+- **Error Handling**: Use try/catch blocks or equivalent mechanisms to handle runtime errors gracefully.
+- **Logging**: Log errors where they occur for better observability and debugging.
+
+---
+## Security Considerations
+- **Sensitive Data Management**: Store and manage sensitive data (e.g., API keys, credentials) securely and never commit them to version control. Use environment variables, secure key stores, or Docker secrets.
+- **Dependency Updates**: Regularly update dependencies to mitigate known vulnerabilities.
+- **Access Control**: Enforce least privilege for services and APIs to prevent unauthorized access to data.
+
+---
+## Testing Guidelines
+- **Unit Tests**: Write comprehensive unit tests for all functions and classes.
+- **Integration Tests**: Include integration tests if the feature interacts with external systems.
+- **Automation**: Automate tests via a CI/CD pipeline so that code changes are always validated.
+
+---
+## Docker Image Management
+
+To manage Docker images and ensure they are available on Docker Hub, follow these steps:
+
+1. **Build the Image**:
+   - Use the `docker build` command to create your Docker image.
+
+2. **Tag the Image**:
+   - Tag the image with your Docker Hub repository name using the `docker tag` command.
+   - Example for Monolith: `docker tag monolith-app:latest atalrani/ai-saas-platform:latest`
+   - Example for Analysis Base: `docker tag analysis-base:latest atalrani/ai-saas-platform-analysis-base:latest`
+
+3. **Push the Image**:
+   - Push the tagged image to Docker Hub using the `docker push` command.
+   - Example for Monolith: `docker push atalrani/ai-saas-platform:latest`
+   - Example for Analysis Base: `docker push atalrani/ai-saas-platform-analysis-base:latest`
+
+By following these steps, you can ensure that your Docker images are properly managed and available for deployment.
+
+To build and run a microservice, navigate to its directory and execute the following command:
+
+```bash
+sudo docker build -t <microservice-name> .
+```
+
+Replace `<microservice-name>` with the appropriate name, such as `communication-base` or `marketing-base`.
+
+---
+## Concurrency, State, and Event Management
+Our application handles concurrent operations by leveraging asyncio-based workers in the microservices/analysis-base/src/analysis_main.py. Within each microservice, a dedicated event management system (common/event_manager.py) tracks service state transitions and publishes relevant events to downstream services. By carefully isolating shared data in a protected module and validating all inputs, we ensure consistent and conflict-free state updates.
+
+Key points specific to our code:
+- We use asyncio gather() methods for parallel I/O tasks in the analysis microservice.
+- Event subscription and publishing is handled by the event_manager.py, where events are queued and processed in chronological order.
+- Shared state is safely updated within a dedicated concurrency-aware data structure.
+
+## Coding Standards
+All .py files in our microservices and common modules follow PEP 8 guidelines with additional custom linting rules to maintain consistency. Functions and classes contain clear docstrings describing parameters, return values, exceptions, and overall functionality. Security-related sections of the code (e.g., environment variable access) include detailed docstrings indicating any potential risks or usage constraints.
+
+## Security and Reliability
+Security tokens, API keys, and database credentials are retrieved from environment variables using secure placeholders in your code, ensuring no sensitive data is committed to version control. Input validation is performed at every API endpoint to prevent injection attacks and data corruption. Reliability is improved through robust exception handling that logs internal errors to a centralized logger.
+
+## CI/CD Pipeline
+Continuous Integration (CI) is carried out using GitHub Actions, which runs our linting, tests, and security checks on every pull request. Continuous Deployment (CD) is triggered upon successful tests and merges to the main branch. Artifacts are uploaded to a secure artifact management system specific to our pipeline, and environment-specific deploy scripts are automatically invoked for staging and production environments.
+
+## Docker and Kubernetes
+Our microservices are containerized via Dockerfiles found in their respective directories (e.g., microservices/analysis-base/Dockerfile). When building containers, environment variables for security tokens and production credentials are only injected in the production stage. Kubernetes deployment manifests are customized to your service architecture, placing each microservice in its own Kubernetes Deployment and Service, with a shared ConfigMap for environment-specific details. Rolling updates are used to avoid downtime during new deployments.
+
+---
+

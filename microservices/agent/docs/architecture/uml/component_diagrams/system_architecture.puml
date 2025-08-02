@@ -1,0 +1,160 @@
+#yet to be updated 
+
+@startuml System Architecture
+
+' Style and presentation
+skinparam componentStyle rectangle
+skinparam backgroundColor white
+skinparam linetype ortho
+skinparam padding 5
+skinparam shadowing false
+
+' Colors
+!define INTERFACE_COLOR #6495ED
+!define APPLICATION_COLOR #87CEFA
+!define DOMAIN_COLOR #B0E0E6
+!define INFRASTRUCTURE_COLOR #DCDCDC
+!define EXTERNAL_COLOR #FFE4C4
+!define DATABASE_COLOR #F0E68C
+
+' Title
+title <b>Agent Microservice - System Architecture</b>
+
+' Legend
+legend right
+  <b>Legend</b>
+  |= Layer |= Description |
+  | <back:#6495ED> Interface </back> | API endpoints & controllers |
+  | <back:#87CEFA> Application </back> | Business logic & services |
+  | <back:#B0E0E6> Domain </back> | Core entities & rules |
+  | <back:#DCDCDC> Infrastructure </back> | External system interfaces |
+  | <back:#FFE4C4> External </back> | External services |
+  | <back:#F0E68C> Data Storage </back> | Databases & caches |
+endlegend
+
+' Components by layer
+package "Interface Layer" #INTERFACE_COLOR {
+    [API Gateway] as api_gateway
+    [Request Controller] as request_controller
+    [Template Controller] as template_controller
+    [Monitoring Controller] as monitoring_controller
+    [Health Controller] as health_controller
+    [Authentication Handler] as auth_handler
+}
+
+package "Application Layer" #APPLICATION_COLOR {
+    [Request Service] as request_service
+    [Template Service] as template_service
+    [Orchestration Service] as orchestration_service
+    [Metrics Service] as metrics_service
+}
+
+package "Domain Layer" #DOMAIN_COLOR {
+    [Execution Template] as execution_template
+    [Request Entity] as request_entity
+    [User Entity] as user_entity
+    [Value Objects] as value_objects
+    [Domain Events] as domain_events
+    [Domain Services] as domain_services
+}
+
+package "Infrastructure Layer" #INFRASTRUCTURE_COLOR {
+    [Request Repository] as request_repository
+    [Template Repository] as template_repository
+    [User Repository] as user_repository
+    [Cache Service] as cache_service
+    [Message Queue Client] as message_queue_client
+    [Logger] as logger
+    [Configuration] as configuration
+}
+
+' External Services
+package "External Services" #EXTERNAL_COLOR {
+    [Analysis Service] as analysis_service
+    [Generative Service] as generative_service
+    [Communication Service] as communication_service
+    [Authentication Service] as auth_service
+}
+
+' Databases
+package "Data Storage" #DATABASE_COLOR {
+    database "PostgreSQL" as postgres {
+        [Request DB] as request_db
+        [Template DB] as template_db
+        [User DB] as user_db
+    }
+    database "Redis Cache" as redis {
+        [Template Cache] as template_cache
+        [Request Results Cache] as results_cache
+        [Session Cache] as session_cache
+    }
+    queue "Message Queue" as message_queue
+}
+
+' Data Flow
+' Interface <-> Application
+api_gateway --> auth_handler : "1. Auth requests"
+api_gateway --> request_controller : "2. Request operations"
+api_gateway --> template_controller : "3. Template operations"
+api_gateway --> monitoring_controller : "4. Metrics access"
+api_gateway --> health_controller : "5. Health checks"
+
+request_controller --> request_service : "Process requests"
+template_controller --> template_service : "Manage templates"
+monitoring_controller --> metrics_service : "Collect metrics"
+
+' Application <-> Domain
+request_service --> orchestration_service : "Orchestrate execution"
+template_service --> orchestration_service : "Provide templates"
+orchestration_service --> request_entity : "Update state"
+orchestration_service --> execution_template : "Execute template"
+metrics_service --> domain_events : "Record events"
+
+' Application <-> Infrastructure
+request_service --> request_repository : "Store/retrieve requests"
+template_service --> template_repository : "Store/retrieve templates"
+orchestration_service --> cache_service : "Cache results"
+orchestration_service --> message_queue_client : "Send messages"
+orchestration_service --> logger : "Log operations"
+
+' Infrastructure <-> Data Storage
+request_repository --> request_db : "CRUD operations"
+template_repository --> template_db : "CRUD operations"
+user_repository --> user_db : "CRUD operations"
+cache_service --> template_cache : "Cache templates"
+cache_service --> results_cache : "Cache results"
+cache_service --> session_cache : "Store sessions"
+message_queue_client --> message_queue : "Send/receive messages"
+
+' Infrastructure <-> External Services
+message_queue --> analysis_service : "Analysis requests/results"
+message_queue --> generative_service : "Generation requests/results"
+message_queue --> communication_service : "Notification requests"
+auth_handler --> auth_service : "Token validation"
+
+' Notes on key components
+note right of orchestration_service
+  <b>Central Orchestrator</b>
+  - Coordinates request processing
+  - Routes to appropriate services
+  - Manages request lifecycle
+  - Handles async communication
+end note
+
+note right of message_queue
+  <b>Asynchronous Communication</b>
+  - Decouples service dependencies
+  - Handles service unavailability
+  - Enables scaling of components
+  - Manages request backlog
+end note
+
+note bottom of domain_layer
+  <b>Domain Layer</b>
+  - Contains core business logic
+  - Independent of external systems
+  - Defines data structures & rules
+  - Central to clean architecture
+end note
+
+@enduml 

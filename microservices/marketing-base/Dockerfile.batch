@@ -1,0 +1,19 @@
+FROM python:3.9-slim
+
+WORKDIR /app
+
+# Copy requirements file
+COPY microservices/marketing-base/requirements.txt .
+
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy source code
+COPY microservices/marketing-base/src/ /app/src/
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV WORKER_ID=${HOSTNAME}
+
+# Set the entrypoint
+CMD ["python", "-m", "src.worker.batch_worker"] 
