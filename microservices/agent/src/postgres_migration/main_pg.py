@@ -32,7 +32,7 @@ from src.application.services.default_orchestration_service import DefaultOrches
 from src.application.services.logging_communication_service import LoggingCommunicationService
 from src.application.services.request_service import RequestService
 from src.application.services.batch_processor import BatchProcessor
-from microservices.agent.src.infrastructure.services.batch_scheduler import BatchScheduler
+from src.infrastructure.services.batch_scheduler import BatchScheduler
 
 # Import interfaces
 from src.application.interfaces.template_service import ITemplateService

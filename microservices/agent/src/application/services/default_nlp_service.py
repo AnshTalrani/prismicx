@@ -7,16 +7,12 @@ import logging
 from typing import Dict, Any, Optional, List, Tuple
 import re
 
-# Import spaCy
-try:
-    import spacy
-    SPACY_AVAILABLE = True
-except ImportError:
-    SPACY_AVAILABLE = False
+# Import spaCy - will be imported only when needed
+SPACY_AVAILABLE = False
 
 from src.application.interfaces.nlp_service import INLPService
 from src.domain.entities.purpose import Purpose
-from microservices.agent.src.application.interfaces.repository.purpose_repository import IPurposeRepository
+from src.application.interfaces.repository.purpose_repository import IPurposeRepository
 
 logger = logging.getLogger(__name__)
 
@@ -40,14 +36,14 @@ class DefaultNLPService(INLPService):
         
         # Initialize spaCy if available
         self.nlp = None
-        if SPACY_AVAILABLE:
-            try:
-                self.nlp = spacy.load("en_core_web_sm")
-                self.logger.info("Initialized spaCy model for NLP processing")
-            except OSError:
-                self.logger.warning("Could not load spaCy model. Run 'python -m spacy download en_core_web_sm' to install it")
-        else:
-            self.logger.warning("spaCy not available. Install with 'pip install spacy' for enhanced NLP capabilities")
+        try:
+            import spacy
+            self.nlp = spacy.load("en_core_web_sm")
+            self.logger.info("Initialized spaCy model for NLP processing")
+            SPACY_AVAILABLE = True
+        except (ImportError, OSError) as e:
+            self.logger.warning(f"spaCy not available or model not found: {e}. Using simple keyword matching.")
+            SPACY_AVAILABLE = False
         
         self._initialize_keywords()
     

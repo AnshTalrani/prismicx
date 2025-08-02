@@ -4,7 +4,7 @@ import json
 import logging
 from typing import List, Optional, Dict, Any
 
-from microservices.agent.src.application.interfaces.repository.purpose_repository import IPurposeRepository
+from src.application.interfaces.repository.purpose_repository import IPurposeRepository
 from src.domain.entities.purpose import Purpose
 
 class FilePurposeRepository(IPurposeRepository):

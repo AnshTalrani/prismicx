@@ -10,7 +10,7 @@ from src.domain.entities.execution_template import ExecutionTemplate
 from src.domain.value_objects.service_type import ServiceType
 from src.application.interfaces.template_service import ITemplateService
 from src.domain.repositories.template_repository import ITemplateRepository
-from microservices.agent.src.application.interfaces.repository.purpose_repository import IPurposeRepository
+from src.application.interfaces.repository.purpose_repository import IPurposeRepository
 from src.utils.id_utils import generate_request_id
 
 logger = logging.getLogger(__name__)

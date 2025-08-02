@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 # Import repositories
 from src.infrastructure.repositories.template_repository import FileTemplateRepository
-from src.infrastructure.repositories.request_repository import InMemoryRequestRepository
+from src.infrastructure.repositories.in_memory_request_repository import InMemoryRequestRepository
 from src.infrastructure.repositories.file_purpose_repository import FilePurposeRepository
 from src.infrastructure.clients.category_repository_client import CategoryRepositoryClient
 # Import TaskRepositoryAdapter
@@ -52,6 +52,10 @@ from src.utils.id_utils import generate_request_id, generate_batch_id, validate_
 
 # Import ConfigDatabaseClient
 from src.infrastructure.clients.config_database_client import ConfigDatabaseClient
+
+# Get configuration values
+service_id = os.getenv("SERVICE_ID", "agent-service")
+conditions_path = os.getenv("CONTEXT_CONDITIONS_PATH", "data/context/context_conditions.json")
 
 # Configure logging
 logging.basicConfig(

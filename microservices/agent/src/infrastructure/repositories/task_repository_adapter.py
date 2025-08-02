@@ -15,7 +15,7 @@ from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta
 
 # Import the task client library
-from database_layer.common.task_client import (
+from task_client import (
     create_task,
     get_pending_tasks,
     claim_task,

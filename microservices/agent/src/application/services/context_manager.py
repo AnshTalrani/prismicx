@@ -16,7 +16,7 @@ from src.utils.id_utils import generate_request_id
 from src.infrastructure.repositories.task_repository_adapter import TaskRepositoryAdapter
 from src.config.task_repository_config import COMPLETED_CONTEXT_TTL, FAILED_CONTEXT_TTL
 from src.domain.value_objects.batch_type import ProcessingMethod, DataSourceType
-from src.infrastructure.repositories.user_repository_adapter import UserRepositoryAdapter
+from src.infrastructure.repositories.user_repository import UserRepository
 
 logger = logging.getLogger(__name__)
 

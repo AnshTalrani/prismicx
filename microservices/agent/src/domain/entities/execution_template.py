@@ -28,10 +28,10 @@ class ExecutionTemplate:
         updated_at: Timestamp when the template was last updated
     """
     
-    id: str = field(default_factory=lambda: str(uuid.uuid4()))
     name: str
-    description: Optional[str] = None
     service_type: str
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    description: Optional[str] = None
     version: str = "1.0.0"
     parameters: Dict[str, Any] = field(default_factory=dict)
     metadata: Dict[str, Any] = field(default_factory=dict)

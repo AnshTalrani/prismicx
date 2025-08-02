@@ -1,0 +1,128 @@
+@startuml Batch Processing Architecture - PrismicX AI Framework
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam roundcorner 15
+
+title **PrismicX AI Framework - Advanced Batch Processing Architecture**
+
+' Define colors
+!define SCHEDULER_COLOR #FF6B6B
+!define PROCESSOR_COLOR #4ECDC4
+!define WORKER_COLOR #45B7D1
+!define MATRIX_COLOR #96CEB4
+!define DATA_COLOR #FFEAA7
+
+' Scheduler Layer
+package "⏰ Batch Scheduler Layer" as SCHEDULER_LAYER {
+    [Preference-Based Scheduler] as PREF_SCHEDULER <<SCHEDULER_COLOR>>
+    [Dynamic Batch Scheduler] as DYN_SCHEDULER <<SCHEDULER_COLOR>>
+    [Multi-Tenant Scheduler] as MT_SCHEDULER <<SCHEDULER_COLOR>>
+    [Config Change Monitor] as CONFIG_MONITOR <<SCHEDULER_COLOR>>
+}
+
+' Processor Layer
+package "⚡ Batch Processor Layer" as PROCESSOR_LAYER {
+    [Enhanced Batch Processor] as ENH_PROCESSOR <<PROCESSOR_COLOR>>
+    [Multi-Tenant Batch Processor] as MT_PROCESSOR <<PROCESSOR_COLOR>>
+    [Campaign Batch Processor] as CAMPAIGN_PROCESSOR <<PROCESSOR_COLOR>>
+    [Preference-Based Processor] as PREF_PROCESSOR <<PROCESSOR_COLOR>>
+}
+
+' 2x2 Matrix Model
+package "🎯 2x2 Matrix Model" as MATRIX_MODEL {
+    [Individual Users] as IND_USERS <<MATRIX_COLOR>>
+    [Batch Users] as BATCH_USERS <<MATRIX_COLOR>>
+    [Individual Categories] as IND_CATEGORIES <<MATRIX_COLOR>>
+    [Batch Categories] as BATCH_CATEGORIES <<MATRIX_COLOR>>
+}
+
+' Worker Layer
+package "🔧 Worker Layer" as WORKER_LAYER {
+    [Generative Worker] as GEN_WORKER <<WORKER_COLOR>>
+    [Analysis Worker] as ANALYSIS_WORKER <<WORKER_COLOR>>
+    [Communication Worker] as COMM_WORKER <<WORKER_COLOR>>
+    [Client Worker Base] as CLIENT_WORKER <<WORKER_COLOR>>
+}
+
+' Data Layer
+package "🗄️ Data Layer" as DATA_LAYER {
+    database "Config Database" as CONFIG_DB <<DATA_COLOR>>
+    database "MongoDB Context" as MONGO_DB <<DATA_COLOR>>
+    database "Campaign Repository" as CAMPAIGN_REPO <<DATA_COLOR>>
+    database "Multi-Tenant Repository" as MT_REPO <<DATA_COLOR>>
+}
+
+' External Services
+package "🌐 External Services" as EXTERNAL_SERVICES {
+    [Analysis Base] as ANALYSIS_BASE
+    [Communication Base] as COMM_BASE
+    [Generative Base] as GEN_BASE
+    [Marketing Base] as MARKETING_BASE
+}
+
+' Key Connections - Scheduler to Processor
+PREF_SCHEDULER --> PREF_PROCESSOR : Preference Groups
+DYN_SCHEDULER --> ENH_PROCESSOR : Dynamic Jobs
+MT_SCHEDULER --> MT_PROCESSOR : Multi-Tenant Jobs
+CONFIG_MONITOR --> PREF_SCHEDULER : Config Changes
+
+' Processor to Matrix
+ENH_PROCESSOR --> IND_USERS : Individual Processing
+ENH_PROCESSOR --> BATCH_USERS : Batch Processing
+ENH_PROCESSOR --> IND_CATEGORIES : Category Processing
+ENH_PROCESSOR --> BATCH_CATEGORIES : Combined Processing
+
+' Matrix to Workers
+IND_USERS --> GEN_WORKER : User-Specific Tasks
+BATCH_USERS --> ANALYSIS_WORKER : Batch Analysis
+IND_CATEGORIES --> COMM_WORKER : Category Communication
+BATCH_CATEGORIES --> CLIENT_WORKER : Combined Tasks
+
+' Workers to External Services
+GEN_WORKER --> GEN_BASE : Generative Tasks
+ANALYSIS_WORKER --> ANALYSIS_BASE : Analysis Tasks
+COMM_WORKER --> COMM_BASE : Communication Tasks
+CAMPAIGN_PROCESSOR --> MARKETING_BASE : Campaign Tasks
+
+' Data Layer Connections
+CONFIG_DB --> PREF_SCHEDULER : User Preferences
+MONGO_DB --> CLIENT_WORKER : Context Data
+CAMPAIGN_REPO --> CAMPAIGN_PROCESSOR : Campaign Data
+MT_REPO --> MT_PROCESSOR : Tenant Data
+
+' Key Features Highlight
+note right of SCHEDULER_LAYER
+**⏰ Advanced Scheduling:**
+• Preference-based grouping
+• Dynamic frequency adaptation
+• Multi-tenant isolation
+• Real-time config monitoring
+end note
+
+note right of MATRIX_MODEL
+**🎯 2x2 Matrix Model:**
+• Individual vs Batch processing
+• Users vs Categories data sources
+• Flexible combination strategies
+• Optimized for each use case
+end note
+
+note right of WORKER_LAYER
+**🔧 Worker Architecture:**
+• Service-specific workers
+• Decentralized processing
+• Fault-tolerant design
+• Horizontal scaling ready
+end note
+
+note right of PROCESSOR_LAYER
+**⚡ Processing Features:**
+• Automatic retry mechanisms
+• Progress tracking
+• Error handling
+• Resource optimization
+end note
+
+@enduml 
