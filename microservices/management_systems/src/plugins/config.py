@@ -7,7 +7,8 @@ plugin directories, scan intervals, and other parameters.
 
 from pathlib import Path
 from typing import List, Optional
-from pydantic import BaseSettings, DirectoryPath
+from pydantic import DirectoryPath
+from pydantic_settings import BaseSettings
 
 class PluginConfig(BaseSettings):
     """Plugin system configuration settings."""

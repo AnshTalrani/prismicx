@@ -46,6 +46,7 @@ from src.application.interfaces.repository.category_repository import ICategoryR
 from src.api.consultancy_bot_api import router as bot_router
 from src.api.batch_api import router as batch_router
 from src.infrastructure.services.consultancy_bot_handler import ConsultancyBotHandler
+from src.api import dependencies
 
 # Import ID utilities
 from src.utils.id_utils import generate_request_id, generate_batch_id, validate_request_id
@@ -82,7 +83,7 @@ app.add_middleware(
 # Create shared services
 template_repository = FileTemplateRepository()
 request_repository = InMemoryRequestRepository()
-purpose_repository = FilePurposeRepository(template_repository=template_repository)  # Pass template_repository for optimization
+purpose_repository = FilePurposeRepository()  # Load purposes from config
 nlp_service = DefaultNLPService(purpose_repository)
 template_service = TemplateService(
     template_repository=template_repository,
@@ -153,8 +154,9 @@ http_client = httpx.AsyncClient(
 
 # Initialize config database client
 config_db_client = ConfigDatabaseClient(
-    http_client=http_client,
-    cache_ttl=config_cache_ttl
+    base_url=os.getenv("CONFIG_SERVICE_URL", "http://config-service:8000"),
+    timeout=30.0,
+    api_key=os.getenv('CONFIG_SERVICE_API_KEY', '')
 )
 
 # Initialize batch processor with all required dependencies
@@ -177,7 +179,17 @@ batch_scheduler.change_poll_interval = config_poll_interval
 
 logger.info("BatchProcessor and BatchScheduler initialized with Config Database integration")
 
-# Create API dependencies
+# Set up dependency injection for API routes
+dependencies.set_batch_processor(batch_processor)
+dependencies.set_request_service(request_service)
+dependencies.set_template_service(template_service)
+dependencies.set_context_manager(context_manager)
+dependencies.set_output_manager(output_manager)
+dependencies.set_user_repository(user_repository)
+dependencies.set_consultancy_bot_handler(ConsultancyBotHandler(request_service, user_repository=user_repository))
+dependencies.set_category_repository(category_repository)
+
+# Create API dependencies (kept for backward compatibility)
 def get_template_service():
     return template_service
 

@@ -13,15 +13,15 @@ from typing import Set
 
 import structlog
 
-from src.config.config_manager import get_settings
-from src.config.monitoring import get_metrics, setup_monitoring
-from src.clients.system_users_repository_client import SystemUsersRepositoryClient
-from src.clients.campaign_users_repository_client import CampaignUsersRepositoryClient
-from src.storage.entity_repository_manager import EntityRepositoryManager
-from src.service.campaign_manager import CampaignManager
-from src.service.campaign_poller import CampaignPoller
-from src.service.worker_service import WorkerService
-from src.multitenant import (
+from config.config_manager import get_settings
+from config.monitoring import get_metrics, setup_monitoring
+from clients.system_users_repository_client import SystemUsersRepositoryClient
+from clients.campaign_users_repository_client import CampaignUsersRepositoryClient
+from storage.entity_repository_manager import EntityRepositoryManager
+from service.campaign_manager import CampaignManager
+from service.campaign_poller import CampaignPoller
+from service.worker_service import WorkerService
+from multitenant import (
     TenantService, 
     get_database_adapter,
     get_communication_config

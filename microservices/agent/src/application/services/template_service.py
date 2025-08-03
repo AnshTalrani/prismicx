@@ -94,6 +94,18 @@ class TemplateService(ITemplateService):
         """
         return await self.template_repository.get_by_id(template_id)
     
+    async def get_template_by_id(self, template_id: str) -> Optional[ExecutionTemplate]:
+        """
+        Get a template by ID (alias for get_template).
+        
+        Args:
+            template_id: Unique identifier of the template
+            
+        Returns:
+            Template if found, None otherwise
+        """
+        return await self.get_template(template_id)
+    
     async def list_templates(self, service_type: Optional[ServiceType] = None) -> List[ExecutionTemplate]:
         """
         List templates with optional service type filtering.

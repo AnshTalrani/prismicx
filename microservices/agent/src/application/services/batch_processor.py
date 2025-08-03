@@ -921,4 +921,19 @@ class BatchProcessor:
             "tenant_summaries": tenant_summaries,
             "created_at": batch_info.get("created_at"),
             "completed_at": batch_info.get("completed_at")
-        } 
+        }
+    
+    def _load_batch_configs(self):
+        """Load batch configurations from file."""
+        try:
+            if os.path.exists(self.config_file):
+                with open(self.config_file, 'r') as f:
+                    config_data = json.load(f)
+                    self.batch_configs = config_data.get('batch_processing_jobs', {})
+                    self.logger.info(f"Loaded {len(self.batch_configs)} batch configurations")
+            else:
+                self.logger.warning(f"Batch config file not found: {self.config_file}")
+                self.batch_configs = {}
+        except Exception as e:
+            self.logger.error(f"Error loading batch configs: {str(e)}")
+            self.batch_configs = {}

@@ -9,8 +9,27 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional, List
 import logging
 from pathlib import Path
+from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
+
+@dataclass
+class PluginMetadata:
+    """Metadata for plugin registration and management."""
+    plugin_id: str
+    name: str
+    version: str
+    description: str = ""
+    author: str = ""
+    dependencies: List[str] = None
+    enabled: bool = True
+    config_schema: Dict[str, Any] = None
+    
+    def __post_init__(self):
+        if self.dependencies is None:
+            self.dependencies = []
+        if self.config_schema is None:
+            self.config_schema = {}
 
 class PluginBase(ABC):
     """Base class for all plugins in the system."""

@@ -1,0 +1,12 @@
+{
+  "status": {
+    "completed": {
+      "action": "route_to_output",
+      "delete_after": 86400
+    },
+    "failed": {
+      "action": "log_error",
+      "delete_after": 604800
+    }
+  }
+}

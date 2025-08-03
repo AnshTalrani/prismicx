@@ -15,7 +15,7 @@ from ..models.plugin_models import (
     PluginUpdateRequest
 )
 from ..models.responses import PaginatedResponse, SuccessResponse
-from ..auth import get_current_user, User
+from ..common.auth import get_current_user, CurrentUser as User
 
 router = APIRouter(prefix="/plugins", tags=["plugins"])
 

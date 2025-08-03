@@ -1,0 +1,231 @@
+version: '3.8'
+
+# PrismicX Microservices - Cloud Demonstration Setup
+# Optimized Docker Compose for all 4 production-ready microservices
+
+services:
+  # Task Repository Service (Database Layer)
+  task-repo-service:
+    build:
+      context: ./database-layer/task-repo-service
+      dockerfile: Dockerfile
+    container_name: task-repo-service
+    restart: unless-stopped
+    ports:
+      - "8503:8503"
+    environment:
+      - MONGODB_URI=mongodb://mongodb-system:27017/task_repository
+      - MONGODB_DATABASE=task_repository
+      - MONGODB_TASKS_COLLECTION=tasks
+      - API_KEY=dev_api_key
+      - SERVICE_NAME=task-repo-service
+      - LOG_LEVEL=INFO
+    networks:
+      - prismicx-network
+    depends_on:
+      - mongodb-system
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8503/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Management Systems Microservice
+  management-systems:
+    build:
+      context: ./microservices/management_systems
+      dockerfile: Dockerfile
+    container_name: management-systems
+    restart: unless-stopped
+    ports:
+      - "8002:8002"
+    environment:
+      - MANAGEMENT_SYSTEM_REPO_URL=http://management-system-repo:8505
+      - TENANT_MGMT_SERVICE_URL=http://tenant-mgmt-service:8501
+      - USER_DATA_SERVICE_URL=http://user-data-service:8502
+      - TASK_REPO_SERVICE_URL=http://task-repo-service:8503
+      - REDIS_CACHE_URL=redis://redis-cache:6379
+      - API_KEY=dev_api_key
+      - LOG_LEVEL=INFO
+    networks:
+      - prismicx-network
+    depends_on:
+      - task-repo-service
+      - redis-cache
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Communication Base Microservice
+  communication-base:
+    build:
+      context: ./microservices/communication-base
+      dockerfile: Dockerfile
+    container_name: communication-base
+    restart: unless-stopped
+    ports:
+      - "8003:8003"
+    environment:
+      - MONGODB_URI=mongodb://mongodb-system:27017/communication_base
+      - REDIS_URL=redis://redis-cache:6379
+      - TASK_REPO_URL=http://task-repo-service:8503
+      - MANAGEMENT_SYSTEMS_URL=http://management-systems:8002
+      - API_KEY=dev_api_key
+      - LOG_LEVEL=INFO
+    networks:
+      - prismicx-network
+    depends_on:
+      - mongodb-system
+      - redis-cache
+      - management-systems
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Agent Microservice
+  agent:
+    build:
+      context: ./microservices/agent
+      dockerfile: Dockerfile
+    container_name: agent
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - TASK_REPO_URL=http://task-repo-service:8503
+      - TASK_REPO_API_KEY=dev_api_key
+      - SERVICE_ID=agent-service
+      - CONTEXT_CLEANUP_INTERVAL_HOURS=24
+      - COMPLETED_CONTEXT_TTL=86400
+      - FAILED_CONTEXT_TTL=604800
+      - LOG_LEVEL=INFO
+      - MANAGEMENT_SYSTEMS_URL=http://management-systems:8002
+      - COMMUNICATION_BASE_URL=http://communication-base:8003
+    networks:
+      - prismicx-network
+    depends_on:
+      - task-repo-service
+      - management-systems
+      - communication-base
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Supporting Infrastructure Services
+
+  # MongoDB for data storage
+  mongodb-system:
+    image: mongo:7.0
+    container_name: mongodb-system
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+      - MONGO_INITDB_DATABASE=prismicx
+    volumes:
+      - mongodb_data:/data/db
+      - ./database-layer/init-scripts/mongodb:/docker-entrypoint-initdb.d
+    networks:
+      - prismicx-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Redis for caching and messaging
+  redis-cache:
+    image: redis:7.2-alpine
+    container_name: redis-cache
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass dev_redis_password
+    volumes:
+      - redis_data:/data
+    networks:
+      - prismicx-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # PostgreSQL for structured data (optional for advanced features)
+  postgres-system:
+    image: postgres:15-alpine
+    container_name: postgres-system
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=prismicx
+      - POSTGRES_USER=prismicx_user
+      - POSTGRES_PASSWORD=dev_postgres_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database-layer/init-scripts/postgresql:/docker-entrypoint-initdb.d
+    networks:
+      - prismicx-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U prismicx_user -d prismicx"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Nginx reverse proxy for production-like setup
+  nginx-proxy:
+    image: nginx:alpine
+    container_name: nginx-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+    networks:
+      - prismicx-network
+    depends_on:
+      - agent
+      - management-systems
+      - communication-base
+      - task-repo-service
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+# Volumes for persistent data
+volumes:
+  mongodb_data:
+    driver: local
+  redis_data:
+    driver: local
+  postgres_data:
+    driver: local
+
+# Networks
+networks:
+  prismicx-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

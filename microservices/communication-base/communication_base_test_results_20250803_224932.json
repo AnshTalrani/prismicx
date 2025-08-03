@@ -1,0 +1,110 @@
+{
+  "timestamp": "2025-08-03T22:49:32.202541",
+  "total_time": 7.251586675643921,
+  "success_rate": 100.0,
+  "test_results": {
+    "health": {
+      "status": "passed",
+      "response": {
+        "status": "healthy",
+        "timestamp": "2025-08-03T22:49:28.848222",
+        "components": {
+          "api": {
+            "status": "healthy"
+          },
+          "campaigns": {
+            "status": "healthy",
+            "count": 8
+          },
+          "conversations": {
+            "status": "healthy",
+            "count": 2
+          },
+          "mongodb": {
+            "status": "unhealthy",
+            "error": "Not connected (expected in local testing)"
+          },
+          "redis": {
+            "status": "unhealthy",
+            "error": "Not connected (expected in local testing)"
+          }
+        }
+      }
+    },
+    "root": {
+      "status": "passed",
+      "response": {
+        "name": "Communication Base API",
+        "version": "1.0.0",
+        "description": "Core communication and campaign management microservice"
+      }
+    },
+    "campaigns_crud": {
+      "status": "passed",
+      "campaign_id": "campaign_9_1754246968",
+      "initial_count": 8,
+      "final_count": 9
+    },
+    "conversations": {
+      "status": "passed",
+      "conversations_created": 4,
+      "bot_types_tested": [
+        "support",
+        "sales",
+        "consultancy"
+      ]
+    },
+    "statistics": {
+      "status": "passed",
+      "stats": {
+        "campaigns": {
+          "total": 9,
+          "by_status": {
+            "pending": 0,
+            "active": 1,
+            "completed": 8
+          }
+        },
+        "conversations": {
+          "total": 4,
+          "by_bot_type": {
+            "support": 3,
+            "sales": 0,
+            "consultancy": 1
+          }
+        },
+        "timestamp": "2025-08-03T22:49:31.960766"
+      }
+    },
+    "error_handling": {
+      "status": "passed",
+      "tests_passed": [
+        "Invalid campaign data",
+        "Non-existent campaign",
+        "Invalid conversation data",
+        "Non-existent conversation"
+      ]
+    },
+    "performance": {
+      "status": "passed",
+      "total_time": 0.18678808212280273,
+      "campaigns_created": 10,
+      "conversations_created": 20,
+      "requests_per_second": 160.60981867288876
+    },
+    "data_validation": {
+      "status": "passed",
+      "tests_passed": [
+        "Empty recipients list",
+        "Very long campaign name",
+        "Special characters in message",
+        "Invalid bot type handling"
+      ]
+    }
+  },
+  "summary": {
+    "tests_passed": 8,
+    "tests_failed": 0,
+    "total_tests": 8
+  }
+}

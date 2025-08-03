@@ -106,6 +106,20 @@ class BatchType:
         self.data_source_type = data_source_type
     
     @classmethod
+    def from_components(cls, processing_method: ProcessingMethod, data_source_type: DataSourceType) -> 'BatchType':
+        """
+        Create a BatchType from processing method and data source type components.
+        
+        Args:
+            processing_method: Processing method enum
+            data_source_type: Data source type enum
+            
+        Returns:
+            New BatchType instance
+        """
+        return cls(processing_method, data_source_type)
+    
+    @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'BatchType':
         """
         Create a BatchType from a dictionary.
@@ -171,6 +185,12 @@ INDIVIDUAL_USERS = BatchType(ProcessingMethod.INDIVIDUAL, DataSourceType.USERS)
 INDIVIDUAL_CATEGORIES = BatchType(ProcessingMethod.INDIVIDUAL, DataSourceType.CATEGORIES)
 BATCH_USERS = BatchType(ProcessingMethod.BATCH, DataSourceType.USERS)
 BATCH_CATEGORIES = BatchType(ProcessingMethod.BATCH, DataSourceType.CATEGORIES)
+
+# Add convenience constants as class attributes for easier access
+BatchType.INDIVIDUAL_USERS = INDIVIDUAL_USERS
+BatchType.INDIVIDUAL_CATEGORIES = INDIVIDUAL_CATEGORIES
+BatchType.BATCH_USERS = BATCH_USERS
+BatchType.BATCH_CATEGORIES = BATCH_CATEGORIES
 
 
 def get_batch_type_by_name(name: str) -> Optional[BatchType]:

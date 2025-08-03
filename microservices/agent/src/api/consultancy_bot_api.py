@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 # Dependencies will be injected
 from src.infrastructure.services.consultancy_bot_handler import ConsultancyBotHandler
+from src.api.dependencies import get_consultancy_bot_handler
 
 router = APIRouter(prefix="/bot")
 
@@ -43,7 +44,7 @@ class NotificationResponse(BaseModel):
 @router.post("/request", response_model=BotResponse)
 async def handle_bot_request(
     request: BotRequest,
-    bot_handler: ConsultancyBotHandler = Depends()
+    bot_handler: ConsultancyBotHandler = Depends(get_consultancy_bot_handler)
 ):
     """
     Handle request from consultancy bot.
@@ -69,7 +70,7 @@ async def handle_bot_request(
 @router.post("/notification", response_model=NotificationResponse)
 async def handle_bot_notification(
     notification: BotNotification,
-    bot_handler: ConsultancyBotHandler = Depends()
+    bot_handler: ConsultancyBotHandler = Depends(get_consultancy_bot_handler)
 ):
     """
     Handle notification from consultancy bot.

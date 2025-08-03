@@ -57,6 +57,7 @@ class RequestService(IRequestService):
         self.communication_service = communication_service
         self.nlp_service = nlp_service
         self.user_repository = user_repository
+        self.logger = logger
         logger.info("Initialized request service")
     
     async def process_request(
@@ -225,6 +226,26 @@ class RequestService(IRequestService):
         except ServiceError as e:
             self.logger.error(f"Service error processing request {request_id}: {str(e)}")
             return self._create_error_response(request_id, str(e), "service_error")
+    
+    async def get_processing_templates(self) -> List[Dict[str, Any]]:
+        """
+        Get available processing templates.
+        
+        Returns:
+            List of available templates
+        """
+        try:
+            templates = await self.template_service.get_all_templates()
+            return [{
+                "id": template.id,
+                "name": getattr(template, "name", template.id),
+                "description": getattr(template, "description", ""),
+                "service_type": template.service_type,
+                "version": template.version
+            } for template in templates]
+        except Exception as e:
+            logger.error(f"Error getting processing templates: {str(e)}")
+            return []
             
         except Exception as e:
             self.logger.exception(f"Unexpected error processing request {request_id}: {str(e)}")

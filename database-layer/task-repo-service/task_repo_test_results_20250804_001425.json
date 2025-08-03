@@ -1,0 +1,97 @@
+{
+  "start_time": "2025-08-04T00:14:15.930420",
+  "tests": {
+    "health": {
+      "status": "passed",
+      "response": {
+        "status": "healthy",
+        "service": "task-repo-service",
+        "version": "1.0.0",
+        "timestamp": "2025-08-03T20:14:21.805950",
+        "tasks_count": 2,
+        "components": {
+          "api": "healthy",
+          "storage": "healthy",
+          "memory": "healthy"
+        }
+      }
+    },
+    "root": {
+      "status": "passed",
+      "response": {
+        "service": "Task Repository Service",
+        "version": "1.0.0",
+        "description": "Centralized task management API",
+        "endpoints": {
+          "health": "/health",
+          "tasks": "/api/v1/tasks",
+          "docs": "/docs"
+        }
+      }
+    },
+    "task_crud": {
+      "status": "passed",
+      "task_id": "task_3_1754252062",
+      "operations": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ],
+      "initial_count": 2,
+      "final_count": 3
+    },
+    "task_lifecycle": {
+      "status": "passed",
+      "operations": [
+        "claim",
+        "complete",
+        "fail"
+      ],
+      "task_id": "task_4_1754252063"
+    },
+    "error_handling": {
+      "status": "passed",
+      "tests_passed": 4,
+      "error_scenarios": [
+        "invalid_task_creation",
+        "non_existent_task",
+        "unauthorized_access",
+        "invalid_task_operation"
+      ]
+    },
+    "performance": {
+      "status": "passed",
+      "duration": 0.0699470043182373,
+      "tasks_created": 15,
+      "tasks_per_second": 214.4480688801857
+    },
+    "statistics": {
+      "status": "passed",
+      "stats": {
+        "total_tasks": 19,
+        "status_distribution": {
+          "pending": 17,
+          "completed": 1,
+          "failed": 1
+        },
+        "type_distribution": {
+          "GENERATIVE": 1,
+          "ANALYSIS": 1,
+          "LIFECYCLE_TEST": 1,
+          "FAIL_TEST": 1,
+          "PERFORMANCE_TEST": 15
+        },
+        "timestamp": "2025-08-03T20:14:25.104305"
+      }
+    }
+  },
+  "summary": {
+    "end_time": "2025-08-04T00:14:25.829826",
+    "total_duration": 9.899406,
+    "total_tests": 7,
+    "passed_tests": 7,
+    "failed_tests": 0,
+    "success_rate": 100.0
+  }
+}

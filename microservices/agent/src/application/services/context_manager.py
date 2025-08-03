@@ -791,6 +791,10 @@ class ContextManager:
                 # Sleep for a while before retrying
                 await asyncio.sleep(300)  # 5 minutes
     
+    async def cleanup_old_contexts(self):
+        """Public method to cleanup old contexts (called from startup)."""
+        await self._cleanup_old_contexts()
+    
     async def _cleanup_old_contexts(self):
         """Clean up old contexts."""
         try:

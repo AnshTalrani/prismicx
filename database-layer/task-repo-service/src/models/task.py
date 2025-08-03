@@ -32,11 +32,7 @@ class TaskRequest(BaseModel):
     content: Optional[Dict[str, Any]] = Field(default_factory=dict)
     metadata: Optional[Dict[str, Any]] = Field(default_factory=dict)
     
-    class Config:
-        arbitrary_types_allowed = True
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+    model_config = {"arbitrary_types_allowed": True}
 
 
 class TaskTemplate(BaseModel):
@@ -45,11 +41,7 @@ class TaskTemplate(BaseModel):
     template_data: Optional[Dict[str, Any]] = Field(default_factory=dict)
     parameters: Optional[Dict[str, Any]] = Field(default_factory=dict)
     
-    class Config:
-        arbitrary_types_allowed = True
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+    model_config = {"arbitrary_types_allowed": True}
 
 
 class TaskTags(BaseModel):
@@ -77,11 +69,7 @@ class TaskBase(BaseModel):
     tags: Optional[TaskTags] = None
     metadata: Optional[Dict[str, Any]] = Field(default_factory=dict)
     
-    class Config:
-        arbitrary_types_allowed = True
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+    model_config = {"arbitrary_types_allowed": True}
 
 
 class TaskCreate(TaskBase):
@@ -100,11 +88,7 @@ class TaskUpdate(BaseModel):
     error: Optional[str] = None
     metadata: Optional[Dict[str, Any]] = None
     
-    class Config:
-        arbitrary_types_allowed = True
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+    model_config = {"arbitrary_types_allowed": True}
 
 
 class TaskInDB(TaskBase):

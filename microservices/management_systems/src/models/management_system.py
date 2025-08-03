@@ -18,18 +18,27 @@ Base = declarative_base()
 # Pydantic model for ObjectId support
 class PyObjectId(ObjectId):
     @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
+    def __get_pydantic_core_schema__(cls, source_type, handler):
+        from pydantic_core import core_schema
+        return core_schema.no_info_plain_validator_function(
+            cls.validate,
+            serialization=core_schema.to_string_ser_schema(),
+        )
 
     @classmethod
     def validate(cls, v):
-        if not ObjectId.is_valid(v):
-            raise ValueError("Invalid ObjectId")
-        return ObjectId(v)
+        if isinstance(v, ObjectId):
+            return v
+        if isinstance(v, str):
+            if not ObjectId.is_valid(v):
+                raise ValueError("Invalid ObjectId")
+            return ObjectId(v)
+        raise ValueError("Invalid ObjectId type")
 
     @classmethod
-    def __modify_schema__(cls, field_schema):
-        field_schema.update(type="string")
+    def __get_pydantic_json_schema__(cls, field_schema, handler):
+        field_schema.update(type="string", format="objectid")
+        return field_schema
 
 class SystemType(str, Enum):
     """Types of business management systems."""
@@ -112,19 +121,6 @@ class DataField(BaseModel):
     options: Optional[Dict[str, Any]] = None
     description: Optional[str] = None
     
-    @validator('id')
-    def validate_id(cls, v):
-        if not v or not isinstance(v, str):
-            raise ValueError('Field ID must be a non-empty string')
-        return v
-    
-    @validator('type')
-    def validate_type(cls, v):
-        valid_types = ['string', 'number', 'boolean', 'date', 'object', 'array', 'reference']
-        if v not in valid_types:
-            raise ValueError(f'Field type must be one of: {", ".join(valid_types)}')
-        return v
-    
     class Config:
         json_encoders = {
             ObjectId: str
@@ -139,11 +135,7 @@ class DataView(BaseModel):
     filters: Optional[Dict[str, Any]] = None
     sort: Optional[List[Dict[str, str]]] = None  # e.g. [{"field": "name", "order": "asc"}]
     
-    @validator('id')
-    def validate_id(cls, v):
-        if not v or not isinstance(v, str):
-            raise ValueError('View ID must be a non-empty string')
-        return v
+    # Root validator removed for Pydantic v2 compatibility
     
     class Config:
         json_encoders = {
@@ -156,12 +148,6 @@ class DataItem(BaseModel):
     data: Dict[str, Any]
     created_at: datetime
     updated_at: Optional[datetime] = None
-    
-    @validator('id')
-    def validate_id(cls, v):
-        if not v or not isinstance(v, str):
-            raise ValueError('Item ID must be a non-empty string')
-        return v
     
     class Config:
         json_encoders = {
@@ -204,35 +190,11 @@ class ManagementSystem(BaseModel):
     plugins: Optional[List[PluginReference]] = None
     dependencies: Optional[List[SystemDependency]] = None
     settings: Optional[Dict[str, Any]] = None
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.utcnow())
     updated_at: Optional[datetime] = None
     
     # MongoDB specific field - not included in JSON serialization
     mongo_id: Optional[PyObjectId] = Field(alias="_id", default=None)
-    
-    @validator('name')
-    def validate_name(cls, v):
-        if not v or not isinstance(v, str):
-            raise ValueError('System name must be a non-empty string')
-        return v
-    
-    @validator('fields')
-    def validate_fields(cls, v):
-        if not v or len(v) == 0:
-            raise ValueError('System must have at least one field defined')
-        return v
-    
-    @validator('views')
-    def validate_views(cls, v, values):
-        if not v:
-            return v
-            
-        field_ids = [f.id for f in values.get('fields', [])]
-        for view in v:
-            for field_id in view.fields:
-                if field_id not in field_ids:
-                    raise ValueError(f'View {view.id} references non-existent field {field_id}')
-        return v
     
     class Config:
         json_encoders = {
@@ -250,24 +212,11 @@ class SystemInstance(BaseModel):
     status: str = "active"  # active, inactive, error
     error_message: Optional[str] = None
     plugin_status: Optional[Dict[str, str]] = None
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.utcnow())
     updated_at: Optional[datetime] = None
     
     # MongoDB specific field - not included in JSON serialization
     mongo_id: Optional[PyObjectId] = Field(alias="_id", default=None)
-    
-    @validator('status')
-    def validate_status(cls, v):
-        valid_statuses = ['active', 'inactive', 'error']
-        if v not in valid_statuses:
-            raise ValueError(f'Status must be one of: {", ".join(valid_statuses)}')
-        return v
-    
-    @validator('error_message')
-    def validate_error_message(cls, v, values):
-        if values.get('status') == 'error' and not v:
-            raise ValueError('Error message is required when status is "error"')
-        return v
     
     class Config:
         json_encoders = {
@@ -300,8 +249,8 @@ class UserSystemPermission(BaseModel):
     tenant_id: str
     instance_id: str
     permissions: List[SystemPermission]
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.utcnow())
+    updated_at: datetime = Field(default_factory=lambda: datetime.utcnow())
     
     # MongoDB specific field - not included in JSON serialization
     mongo_id: Optional[PyObjectId] = Field(alias="_id", default=None)

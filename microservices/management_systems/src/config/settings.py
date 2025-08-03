@@ -2,7 +2,8 @@
 Settings module for the management systems API.
 """
 import os
-from pydantic import BaseSettings, Field
+from pydantic import Field
+from pydantic_settings import BaseSettings
 from typing import List
 from functools import lru_cache
 
