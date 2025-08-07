@@ -11,9 +11,9 @@ from sqlalchemy import and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from src.models.database import Contact
-from src.repositories.base import BaseRepository
-from src.models.schemas import BaseSchema
+from ..models.database import Contact
+from .base import BaseRepository
+from ..models.schemas import BaseSchema
 
 class ContactCreate(BaseSchema):
     """Schema for creating a new contact."""

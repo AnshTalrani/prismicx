@@ -10,9 +10,9 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from src.models.database import Workflow
-from src.repositories.base import BaseRepository
-from src.models.schemas import WorkflowCreate, WorkflowDefinition
+from ..models.database import Workflow
+from .base import BaseRepository
+from ..models.schemas import WorkflowCreate, WorkflowDefinition
 
 class WorkflowRepository(BaseRepository[Workflow, WorkflowCreate, dict]):
     """Repository for workflow database operations."""

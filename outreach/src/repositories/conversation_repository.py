@@ -12,9 +12,9 @@ from sqlalchemy import and_, func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from src.models.database import Conversation, Message, MessageDirection, MessageStatus
-from src.repositories.base import BaseRepository
-from src.models.schemas import ConversationCreate, MessageCreate
+from ..models.database import Conversation, Message, MessageDirection, MessageStatus
+from .base import BaseRepository
+from ..models.schemas import ConversationCreate, MessageCreate
 
 class ConversationRepository(BaseRepository[Conversation, ConversationCreate, dict]):
     """Repository for conversation database operations."""

@@ -20,7 +20,7 @@ class BaseSchema(BaseModel):
             datetime: lambda v: v.isoformat(),
             UUID: str
         }
-        orm_mode = True
+        from_attributes = True
         use_enum_values = True
         extra = "ignore"
 

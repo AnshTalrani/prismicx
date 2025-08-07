@@ -11,9 +11,9 @@ from sqlalchemy import and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from src.models.database import Campaign, CampaignStatus, CampaignType
-from src.repositories.base import BaseRepository
-from src.models.schemas import CampaignCreate, CampaignUpdate
+from ..models.database import Campaign, CampaignStatus, CampaignType
+from .base import BaseRepository
+from ..models.schemas import CampaignCreate, CampaignUpdate
 
 class CampaignRepository(BaseRepository[Campaign, CampaignCreate, CampaignUpdate]):
     """Repository for campaign database operations."""
