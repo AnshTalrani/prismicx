@@ -1,0 +1,33 @@
+{
+  "template_type": "campaign",
+  "name": "B2B Lead Nurturing Campaign",
+  "description": "A multi-stage campaign for nurturing B2B leads through the sales funnel",
+  "global_settings": {
+    "follow_up_days": 2,
+    "reminder_count": 3,
+    "escalation_threshold": 0.7,
+    "timing_settings": {
+      "timezone": "UTC",
+      "work_hours": [9, 18]
+    }
+  },
+  "stages": [
+    {
+      "id": "awareness",
+      "name": "Product Awareness",
+      "messages": [
+        {
+          "template": "Hi {{recipient.first_name}}, I wanted to reach out regarding {{company.product_name}} that helps businesses like {{recipient.company_name}} with {{company.value_proposition}}.",
+          "timing": {"delay_hours": 0, "max_follow_ups": 2, "follow_up_delay_hours": 48}
+        }
+      ],
+      "decision_tree": [
+        {"condition": "user_response == 'interested'", "next_stage": "consideration"},
+        {"condition": "user_response == 'not_interested'", "next_stage": "end"},
+        {"condition": "user_response == 'needs_info'", "next_stage": "send_more_info"}
+      ],
+      "progression_rules": {"response_required": true, "min_stage_duration_hours": 24}
+    }
+    // Add more stages as needed
+  ]
+}

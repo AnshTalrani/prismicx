@@ -1,0 +1,45 @@
+{
+  "id": "example-campaign-template",
+  "name": "Example Outreach Campaign",
+  "description": "A sample campaign template with stages and decision tree.",
+  "global_settings": {
+    "rate_limit_delay": 0.01
+  },
+  "stages": [
+    {
+      "id": "start",
+      "type": "message",
+      "message": "Hello {contact[name]}, this is your outreach bot!",
+      "next_stage_id": "collect_input"
+    },
+    {
+      "id": "collect_input",
+      "type": "input",
+      "prompt": "How can I help you today?",
+      "next_stage_id": "decision1"
+    },
+    {
+      "id": "decision1",
+      "type": "decision",
+      "decision": {
+        "condition": "'help' in context.get('user_input', '').lower()"
+      },
+      "branches": [
+        {"condition": "result == True", "next_stage_id": "help_stage"},
+        {"condition": null, "next_stage_id": "end"}
+      ]
+    },
+    {
+      "id": "help_stage",
+      "type": "message",
+      "message": "Sure, I can help you with that!",
+      "next_stage_id": "end"
+    },
+    {
+      "id": "end",
+      "type": "message",
+      "message": "Thank you for your time! Goodbye.",
+      "next_stage_id": null
+    }
+  ]
+}
